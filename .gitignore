@@ -1,0 +1,35 @@
+# Dependencias (se instalan con composer install / npm install)
+/vendor
+/node_modules
+
+# Entorno y secretos
+.env
+.env.backup
+.env.production
+/auth.json
+# Contraseñas de prueba: el repositorio es público
+/CREDENCIALES.md
+
+# Compilados y archivos generados
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/.phpunit.cache
+.phpunit.result.cache
+
+# Video de cierre: pesa más de lo que admite GitHub (100 MB). Se copia aparte al servidor.
+/public/escape.mp4
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# Editores y sistema
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.DS_Store

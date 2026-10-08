@@ -1,0 +1,439 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Mision;
+use App\Models\Participante;
+use App\Models\Partida;
+use App\Models\PartidaMision;
+use Illuminate\Support\Collection;
+
+/**
+ * Ciclo de vida de una partida.
+ *
+ * Reglas acordadas:
+ *  - Cada misión se resuelve en una estación de la sala. Escanear su QR
+ *    arranca el cronómetro de la oportunidad; se supera con el código que
+ *    entrega la estación.
+ *  - Cada misión tiene N oportunidades (0 = ilimitadas). Cada oportunidad
+ *    tiene su propio cronómetro y el tiempo de todas se suma al total.
+ *  - Agotar el cronómetro consume la oportunidad, igual que fallar la respuesta.
+ *  - Sin oportunidades, la misión queda desactivada y el participante sigue con las otras.
+ *  - Cuando ya no le quedan misiones por jugar, las falladas se reactivan
+ *    UNA sola vez (segunda vuelta).
+ *  - El cronómetro lo lleva el servidor: recargar la página no regala tiempo.
+ */
+class Juego
+{
+    /* ------------------------------------------------------------------ */
+    /* Partida */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * La partida del participante. Se juega una sola vez: si ya existe —aunque
+     * esté completada— se devuelve esa, nunca se crea una nueva encima.
+     */
+    public function partidaDe(Participante $participante): Partida
+    {
+        $partida = $participante->partidas()->latest('id')->first();
+
+        if (! $partida) {
+            return $this->crearPartida($participante);
+        }
+
+        $this->incorporarMisionesNuevas($partida);
+
+        return $partida;
+    }
+
+    /**
+     * Si el administrador habilita una misión mientras hay partidas en curso,
+     * se agrega a esas partidas: de lo contrario el participante la vería
+     * bloqueada y nunca podría reunir el código completo.
+     */
+    private function incorporarMisionesNuevas(Partida $partida): void
+    {
+        if ($partida->completada()) {
+            return;
+        }
+
+        $nuevas = Mision::jugables()
+            ->whereNotIn('id', $partida->misiones()->pluck('mision_id'))
+            ->get();
+
+        if ($nuevas->isEmpty()) {
+            return;
+        }
+
+        foreach ($nuevas as $mision) {
+            PartidaMision::create([
+                'partida_id' => $partida->id,
+                'mision_id' => $mision->id,
+                'estado' => 'pendiente',
+                'aciertos_posibles' => Mision::ACIERTOS_POSIBLES,
+            ]);
+        }
+
+        $partida->update([
+            'aciertos_posibles' => (int) $partida->misiones()->sum('aciertos_posibles'),
+        ]);
+    }
+
+    public function crearPartida(Participante $participante): Partida
+    {
+        $misiones = Mision::jugables()->get();
+
+        $partida = Partida::create([
+            'participante_id' => $participante->id,
+            'estado' => 'en_curso',
+            'iniciada_en' => now(),
+            'aciertos_posibles' => $misiones->count() * Mision::ACIERTOS_POSIBLES,
+        ]);
+
+        foreach ($misiones as $mision) {
+            PartidaMision::create([
+                'partida_id' => $partida->id,
+                'mision_id' => $mision->id,
+                'estado' => 'pendiente',
+                'aciertos_posibles' => Mision::ACIERTOS_POSIBLES,
+            ]);
+        }
+
+        return $partida;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Estado */
+    /* ------------------------------------------------------------------ */
+
+    /** Estado de cada misión visible, para pintar el centro de mando. */
+    public function tablero(Partida $partida): Collection
+    {
+        $this->cerrarVencidas($partida);
+        $this->reactivarSiCorresponde($partida);
+
+        $avances = $partida->misiones()->with('mision')->get()->keyBy('mision_id');
+        $fragmentos = $partida->participante->asegurarCodigos();
+
+        return Mision::visibles()->get()->map(function (Mision $mision) use ($avances, $fragmentos) {
+            $avance = $avances->get($mision->id);
+
+            return [
+                'mision' => $mision,
+                'avance' => $avance,
+                'estado' => $this->estadoDe($mision, $avance),
+                'fragmento' => $avance?->superada() ? $fragmentos->get($mision->id) : null,
+            ];
+        });
+    }
+
+    /** bloqueada | disponible | superada | fallada */
+    private function estadoDe(Mision $mision, ?PartidaMision $avance): string
+    {
+        if (! $mision->jugable || ! $avance) {
+            return 'bloqueada';
+        }
+
+        return match (true) {
+            $avance->superada() => 'superada',
+            $avance->fallada() => 'fallada',
+            default => 'disponible',
+        };
+    }
+
+    private function quedanMisionesAbiertas(Partida $partida): bool
+    {
+        return $partida->misiones()
+            ->where(function ($consulta) {
+                $consulta->whereIn('estado', ['pendiente', 'en_curso'])
+                    ->orWhere(function ($consulta) {
+                        $consulta->where('estado', 'superada')
+                            ->where(function ($consulta) {
+                                $consulta->where('aciertos_posibles', '<', 1)
+                                    ->orWhereColumn('aciertos', '<>', 'aciertos_posibles');
+                            });
+                    });
+            })
+            ->exists();
+    }
+
+    /**
+     * Consume la oportunidad de cualquier misión cuyo cronómetro ya venció.
+     * Si no le quedan más, queda fallada.
+     */
+    public function cerrarVencidas(Partida $partida): void
+    {
+        $partida->misiones()
+            ->with('mision')
+            ->where('estado', 'en_curso')
+            ->get()
+            ->each(function (PartidaMision $avance) {
+                if ($avance->sinTiempo()) {
+                    $this->vencerIntento($avance);
+                }
+            });
+    }
+
+    /**
+     * Segunda vuelta: si ya no quedan misiones por jugar y hay falladas que
+     * nunca se reactivaron, se abren de nuevo (una sola vez cada una).
+     */
+    public function reactivarSiCorresponde(Partida $partida): bool
+    {
+        if ($this->quedanMisionesAbiertas($partida)) {
+            return false;
+        }
+
+        $reactivables = $partida->misiones()
+            ->where('estado', 'fallada')
+            ->where('reactivada', false)
+            ->get();
+
+        if ($reactivables->isEmpty()) {
+            $this->cerrarPartidaSiTermino($partida);
+
+            return false;
+        }
+
+        foreach ($reactivables as $avance) {
+            $avance->update([
+                'estado' => 'pendiente',
+                'reactivada' => true,
+                'intentos_usados' => 0,
+                'iniciada_en' => null,
+                'finalizada_en' => null,
+            ]);
+        }
+
+        return true;
+    }
+
+    public function cerrarPartidaSiTermino(Partida $partida): void
+    {
+        if ($this->quedanMisionesAbiertas($partida) || $partida->completada()) {
+            return;
+        }
+
+        $partida->update([
+            'estado' => 'completada',
+            'finalizada_en' => now(),
+            'aciertos' => (int) $partida->misiones()->sum('aciertos'),
+            'segundos_jugados' => (int) $partida->misiones()->sum('segundos'),
+        ]);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Jugar una misión */
+    /* ------------------------------------------------------------------ */
+
+    public function avanceDe(Partida $partida, Mision $mision): ?PartidaMision
+    {
+        return $partida->misiones()->where('mision_id', $mision->id)->first();
+    }
+
+    /**
+     * Arranca el cronómetro de la oportunidad si todavía no corre. Se llama
+     * al escanear el QR de la estación; volver a escanearlo no lo reinicia.
+     */
+    public function comenzar(PartidaMision $avance): PartidaMision
+    {
+        if ($avance->estado === 'superada' && ! $avance->superada()) {
+            $avance->update([
+                'estado' => 'pendiente',
+                'intentos_usados' => 0,
+                'iniciada_en' => null,
+                'finalizada_en' => null,
+            ]);
+            $avance->partida()->update(['estado' => 'en_curso', 'finalizada_en' => null]);
+            $avance->refresh();
+        }
+
+        if ($avance->abierta() && ! $avance->iniciada_en) {
+            $avance->update([
+                'estado' => 'en_curso',
+                'iniciada_en' => now(),
+            ]);
+        }
+
+        return $avance->refresh();
+    }
+
+    /**
+     * Evalúa el código que el participante obtuvo en la estación.
+     *
+     * @return array{resultado:string, aciertos:int, posibles:int, porcentaje:float}
+     *                                                                               resultado: superada | reintento | fallada | tiempo
+     */
+    public function responder(PartidaMision $avance, ?string $codigo): array
+    {
+        $mision = $avance->mision;
+
+        // El tiempo manda: si venció, no se evalúa nada y la oportunidad se pierde.
+        if ($avance->sinTiempo()) {
+            $this->vencerIntento($avance);
+            $this->reactivarSiCorresponde($avance->partida);
+
+            return ['resultado' => 'tiempo', 'aciertos' => $avance->aciertos,
+                'posibles' => $avance->aciertos_posibles, 'porcentaje' => 0.0];
+        }
+
+        $codigo = mb_substr(trim((string) $codigo), 0, 60);
+        $superada = $mision->codigoPresencialCoincide($codigo);
+
+        $avance->increment('intentos_usados');
+        $avance->refresh();
+
+        // Se guarda lo que escribió, para revisarlo desde el dashboard.
+        $avance->update([
+            'aciertos' => $superada ? Mision::ACIERTOS_POSIBLES : 0,
+            'aciertos_posibles' => Mision::ACIERTOS_POSIBLES,
+            'respuestas' => ['codigo' => $codigo],
+        ]);
+
+        if ($superada) {
+            $this->cerrarMision($avance, 'superada');
+            $resultado = 'superada';
+        } elseif ($avance->leQuedanIntentos()) {
+            $this->terminarIntento($avance);   // la siguiente oportunidad arranca con el cronómetro completo
+            $resultado = 'reintento';
+        } else {
+            $this->cerrarMision($avance, 'fallada');
+            $resultado = 'fallada';
+        }
+
+        $this->reactivarSiCorresponde($avance->partida);
+
+        return [
+            'resultado' => $resultado,
+            'aciertos' => $avance->aciertos,
+            'posibles' => Mision::ACIERTOS_POSIBLES,
+            'porcentaje' => $superada ? 100.0 : 0.0,
+        ];
+    }
+
+    /** El cronómetro de la oportunidad llegó a cero: la consume. */
+    private function vencerIntento(PartidaMision $avance): void
+    {
+        $avance->increment('intentos_usados');
+
+        if ($avance->leQuedanIntentos()) {
+            $this->terminarIntento($avance);
+        } else {
+            $this->cerrarMision($avance, 'fallada');
+        }
+    }
+
+    /**
+     * Suma el tiempo de la oportunidad en curso al total de la misión y
+     * detiene el cronómetro. La misión sigue abierta para la siguiente.
+     */
+    private function terminarIntento(PartidaMision $avance): void
+    {
+        $avance->update([
+            'segundos' => $avance->segundos + $avance->segundosDelIntento(),
+            'iniciada_en' => null,
+        ]);
+
+        $this->actualizarTotales($avance->partida);
+    }
+
+    private function cerrarMision(PartidaMision $avance, string $estado): void
+    {
+        $avance->update([
+            'estado' => $estado,
+            'segundos' => $avance->segundos + $avance->segundosDelIntento(),
+            'iniciada_en' => null,
+            'finalizada_en' => now(),
+        ]);
+
+        $this->actualizarTotales($avance->partida);
+    }
+
+    private function actualizarTotales(Partida $partida): void
+    {
+        $partida->update([
+            'aciertos' => (int) $partida->misiones()->sum('aciertos'),
+            'aciertos_posibles' => (int) $partida->misiones()->sum('aciertos_posibles'),
+            'segundos_jugados' => (int) $partida->misiones()->sum('segundos'),
+        ]);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Código de recuperación */
+    /* ------------------------------------------------------------------ */
+
+    /** Fragmentos ya conseguidos, en orden de misión. */
+    public function codigoObtenido(Partida $partida): string
+    {
+        return $this->tablero($partida)
+            ->filter(fn ($f) => $f['estado'] === 'superada')
+            ->pluck('fragmento')
+            ->implode('');
+    }
+
+    /**
+     * El código completo que este participante debe ingresar al final: sus
+     * propios fragmentos, así que el código de otro jugador no le sirve.
+     */
+    public function codigoCompleto(Participante $participante): string
+    {
+        $fragmentos = $participante->asegurarCodigos();
+
+        return Mision::jugables()->pluck('id')
+            ->map(fn (int $id) => $fragmentos->get($id))
+            ->implode('');
+    }
+
+    public function codigoCorrecto(Participante $participante, string $intento): bool
+    {
+        $limpio = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $intento));
+
+        return $limpio !== '' && $limpio === strtoupper($this->codigoCompleto($participante));
+    }
+
+    /** Solo se puede ejecutar el código final cuando se superaron todas las misiones jugables. */
+    public function todasLasMisionesSuperadas(Partida $partida): bool
+    {
+        $misiones = Mision::jugables()->pluck('id');
+
+        if ($misiones->isEmpty()) {
+            return false;
+        }
+
+        $superadas = $partida->misiones()
+            ->whereIn('mision_id', $misiones)
+            ->where('estado', 'superada')
+            ->where('aciertos_posibles', '>', 0)
+            ->whereColumn('aciertos', 'aciertos_posibles')
+            ->count();
+
+        return $superadas === $misiones->count();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Ranking */
+    /* ------------------------------------------------------------------ */
+
+    /** Más aciertos primero; a igualdad de aciertos, menos tiempo. */
+    public function ranking(int $limite = 50): Collection
+    {
+        return Partida::with('participante')
+            ->where('aciertos', '>', 0)
+            ->orderByDesc('aciertos')
+            ->orderBy('segundos_jugados')
+            ->limit($limite)
+            ->get()
+            ->values()
+            ->map(function (Partida $partida, int $i) {
+                return [
+                    'puesto' => $i + 1,
+                    'partida' => $partida,
+                    'nombre' => $partida->participante->nombre,
+                    'area' => $partida->participante->area,
+                    'aciertos' => $partida->aciertos,
+                    'total' => $partida->aciertos_posibles,
+                    'tiempo' => $partida->tiempoLegible(),
+                ];
+            });
+    }
+}
