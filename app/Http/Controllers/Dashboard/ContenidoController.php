@@ -79,6 +79,8 @@ class ContenidoController extends Controller
                 'ayuda' => 'Aparece al enviar el código: éxito, reintento, fallo o tiempo agotado.'],
         ]],
         'cierre' => ['titulo' => 'Cierre', 'icono' => 'trophy', 'pantallas' => [
+            ['titulo' => 'Consola de recuperación (proyectada)', 'ruta' => '/consola', 'grupo' => 'consola',
+                'ayuda' => 'Pantalla pública de la sala donde cada jugador digita su código. Muestra el top 10.'],
             ['titulo' => 'Consola final', 'ruta' => '/codigo-final', 'grupo' => 'final',
                 'ayuda' => 'Donde se ingresa el código de recuperación completo.'],
             ['titulo' => 'Victoria', 'ruta' => '/amenaza-contenida', 'grupo' => 'victoria',

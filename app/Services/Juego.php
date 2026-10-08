@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CodigoMision;
 use App\Models\Mision;
 use App\Models\Participante;
 use App\Models\Partida;
@@ -391,6 +392,74 @@ class Juego
         return $limpio !== '' && $limpio === strtoupper($this->codigoCompleto($participante));
     }
 
+    /**
+     * Dueño de un código de recuperación. Cada fragmento es único por misión,
+     * así que el primero basta para saber de quién es; luego se valida entero.
+     * Así la consola de la sala reconoce al jugador sin que inicie sesión.
+     */
+    public function participantePorCodigo(?string $intento): ?Participante
+    {
+        $limpio = strtoupper(preg_replace('/[^A-Z0-9]/i', '', (string) $intento));
+        $primera = Mision::jugables()->value('id');
+
+        if ($limpio === '' || ! $primera) {
+            return null;
+        }
+
+        $participante = CodigoMision::where('mision_id', $primera)
+            ->where('fragmento', substr($limpio, 0, CodigoMision::largo()))
+            ->first()?->participante;
+
+        return $participante && $participante->activo && $this->codigoCorrecto($participante, $limpio)
+            ? $participante
+            : null;
+    }
+
+    /**
+     * Registra que el jugador digitó su código en la consola. Devuelve true la
+     * primera vez y false si ya lo había hecho.
+     */
+    public function registrarCodigoFinal(Partida $partida): bool
+    {
+        if ($partida->codigoIngresado()) {
+            return false;
+        }
+
+        $this->cerrarPartidaSiTermino($partida);
+
+        $partida->update([
+            'estado' => 'completada',
+            'finalizada_en' => $partida->finalizada_en ?? now(),
+            'codigo_final_en' => now(),
+        ]);
+
+        return true;
+    }
+
+    /** Puesto de la partida en el ranking general (null si aún no suma aciertos). */
+    public function puestoDe(Partida $partida): ?int
+    {
+        if ($partida->aciertos < 1) {
+            return null;
+        }
+
+        $mejores = Partida::where('aciertos', '>', 0)
+            ->where(function ($consulta) use ($partida) {
+                $consulta->where('aciertos', '>', $partida->aciertos)
+                    ->orWhere(fn ($c) => $c->where('aciertos', $partida->aciertos)->where('segundos_jugados', '<', $partida->segundos_jugados))
+                    ->orWhere(fn ($c) => $c->where('aciertos', $partida->aciertos)->where('segundos_jugados', $partida->segundos_jugados)->where('id', '<', $partida->id));
+            })
+            ->count();
+
+        return $mejores + 1;
+    }
+
+    /** Partidas que aparecen en el ranking. */
+    public function totalRanking(): int
+    {
+        return Partida::where('aciertos', '>', 0)->count();
+    }
+
     /** Solo se puede ejecutar el código final cuando se superaron todas las misiones jugables. */
     public function todasLasMisionesSuperadas(Partida $partida): bool
     {
@@ -421,6 +490,7 @@ class Juego
             ->where('aciertos', '>', 0)
             ->orderByDesc('aciertos')
             ->orderBy('segundos_jugados')
+            ->orderBy('id')   // desempate estable: el que llegó primero
             ->limit($limite)
             ->get()
             ->values()

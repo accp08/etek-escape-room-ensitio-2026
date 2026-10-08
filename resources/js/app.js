@@ -6,6 +6,7 @@
  */
 
 import { iniciarEditores } from './editor';
+import { esperarConsola, iniciarConsola } from './consola';
 import { iniciarEscaner, iniciarProyeccion, pintarQrs } from './qr';
 
 const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -276,6 +277,10 @@ document.addEventListener('DOMContentLoaded', () => {
     iniciarEscaner();
     pintarQrs();
     iniciarProyeccion();
+
+    // Código final: consola proyectada en la sala, y el celular que la espera.
+    iniciarConsola();
+    esperarConsola();
 
     // Dashboard: vista previa del logo antes de guardarlo.
     const campoLogo = document.querySelector('#logo');

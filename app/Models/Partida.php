@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'participante_id', 'estado', 'iniciada_en', 'finalizada_en',
+    'participante_id', 'estado', 'iniciada_en', 'finalizada_en', 'codigo_final_en',
     'segundos_jugados', 'aciertos', 'aciertos_posibles',
     'certificado_visto_en', 'certificado_descargado_en', 'certificado_descargas',
 ])]
@@ -21,6 +21,7 @@ class Partida extends Model
         return [
             'iniciada_en' => 'datetime',
             'finalizada_en' => 'datetime',
+            'codigo_final_en' => 'datetime',
             'certificado_visto_en' => 'datetime',
             'certificado_descargado_en' => 'datetime',
         ];
@@ -39,6 +40,12 @@ class Partida extends Model
     public function completada(): bool
     {
         return $this->estado === 'completada';
+    }
+
+    /** ¿Ya digitó su código de recuperación en la consola de la sala? */
+    public function codigoIngresado(): bool
+    {
+        return $this->codigo_final_en !== null;
     }
 
     /**

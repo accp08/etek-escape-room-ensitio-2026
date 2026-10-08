@@ -54,7 +54,7 @@
                 <div class="shrink-0">@include('partials.logo', ['tam' => 'sm'])</div>
                 <div class="min-w-0 flex-1">
                     <p class="truncate text-[12.5px] font-black text-ink">{{ $marca['nombre'] }}</p>
-                    <p class="truncate font-mono text-[9.5px] text-muted">Panel de control</p>
+                    <p class="truncate font-mono text-[9.5px] text-muted">Juego en sitio</p>
                 </div>
 
                 <button type="button" data-lateral-toggle

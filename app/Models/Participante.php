@@ -92,7 +92,7 @@ class Participante extends Model
      */
     public static function generarCodigo(int $largo = 6): string
     {
-        $alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $alfabeto = CodigoMision::ALFABETO;
 
         return collect(range(1, $largo))
             ->map(fn () => $alfabeto[random_int(0, strlen($alfabeto) - 1)])

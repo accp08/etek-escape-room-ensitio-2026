@@ -244,11 +244,24 @@ class MisionesEnSitioTest extends TestCase
             ->assertExactJson(['qr' => $this->mision->refresh()->urlActivacion()]);
     }
 
-    public function test_la_pantalla_de_proyeccion_exige_sesion_del_dashboard(): void
+    public function test_la_pantalla_de_proyeccion_es_publica_y_no_muestra_lo_del_administrador(): void
     {
-        $this->get(route('dashboard.misiones.proyectar', $this->mision))->assertRedirect(route('dashboard.login'));
+        $this->mision->update(['codigo_presencial' => null]);
 
-        // Un participante no la puede abrir.
-        $this->comoAna()->get(route('dashboard.misiones.proyectar', $this->mision))->assertRedirect(route('dashboard.login'));
+        // Sin sesión: se ve el QR, pero no el aviso ni el botón del dashboard.
+        $this->get(route('dashboard.misiones.proyectar', $this->mision))
+            ->assertOk()
+            ->assertSee('data-qr="'.e($this->mision->urlActivacion()).'"', false)
+            ->assertDontSee('aún no tiene código')
+            ->assertDontSee('title="Volver al dashboard"', false);
+
+        $this->getJson(route('dashboard.misiones.proyectar', $this->mision))
+            ->assertExactJson(['qr' => $this->mision->urlActivacion()]);
+
+        // Con sesión del dashboard sí aparecen.
+        $this->actingAs(User::factory()->create())
+            ->get(route('dashboard.misiones.proyectar', $this->mision))
+            ->assertSee('aún no tiene código')
+            ->assertSee('title="Volver al dashboard"', false);
     }
 }

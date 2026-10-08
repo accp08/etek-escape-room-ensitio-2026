@@ -21,9 +21,13 @@ class Bitacora
         self::escribir('dashboard', $tipo, $descripcion, $contexto, $nivel, Auth::id());
     }
 
-    public static function juego(string $tipo, string $descripcion, array $contexto = [], string $nivel = 'info'): void
+    /**
+     * Sin $participanteId se toma el de la sesión. La consola de recuperación
+     * no tiene sesión de participante: ahí se pasa el que corresponde al código.
+     */
+    public static function juego(string $tipo, string $descripcion, array $contexto = [], string $nivel = 'info', ?int $participanteId = null): void
     {
-        self::escribir('juego', $tipo, $descripcion, $contexto, $nivel, null, self::participanteActual());
+        self::escribir('juego', $tipo, $descripcion, $contexto, $nivel, null, $participanteId ?? self::participanteActual());
     }
 
     public static function sistema(string $tipo, string $descripcion, array $contexto = [], string $nivel = 'aviso'): void

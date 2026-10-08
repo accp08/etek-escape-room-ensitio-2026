@@ -58,8 +58,8 @@
                 <p class="eyebrow mt-1">Intentos</p>
             </div>
             <div class="panel-flat p-3 text-center">
-                <p class="code-chip !inline-block !px-2 !py-0.5 text-sm">{{ str_repeat('·', (int) config('escape_room.largo_fragmento', 3)) }}</p>
-                <p class="eyebrow mt-1">Fragmento de código</p>
+                <p class="code-chip !inline-block !px-2 !py-0.5 text-sm">{{ str_repeat('·', \App\Models\CodigoMision::largo()) }}</p>
+                <p class="eyebrow mt-1">Código</p>
             </div>
         </div>
 

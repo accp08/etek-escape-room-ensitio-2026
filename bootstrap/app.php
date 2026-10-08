@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // desarrollo), las URL —incluida la del QR— deben salir en https: la
         // cámara del celular solo se puede usar en un origen seguro.
         $middleware->trustProxies(at: ['127.0.0.1', '::1']);
+
+        // La consola de recuperación es pública y pasa horas abierta en el
+        // televisor: un token CSRF vencería y no protege nada sin sesión.
+        $middleware->validateCsrfTokens(except: ['consola/verificar']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

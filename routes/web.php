@@ -7,6 +7,7 @@ use App\Http\Controllers\Dashboard\PanelController;
 use App\Http\Controllers\Dashboard\ParticipanteController;
 use App\Http\Controllers\Dashboard\SesionController;
 use App\Http\Controllers\Juego\AccesoController;
+use App\Http\Controllers\Juego\ConsolaController;
 use App\Http\Controllers\Juego\PartidaController;
 use App\Http\Middleware\ParticipanteAutenticado;
 /*
@@ -26,6 +27,17 @@ Route::get('/', [AccesoController::class, 'formulario'])->name('login');
 Route::post('/acceso', [AccesoController::class, 'entrar'])->middleware('throttle:10,1')->name('acceso');
 Route::post('/salir', [AccesoController::class, 'salir'])->name('salir');
 
+/*
+ * Consola de recuperación: pantalla pública que se proyecta en la sala. El
+ * jugador digita el código que ve en su celular; el código lo identifica.
+ * Sin CSRF (bootstrap/app.php): no hay sesión que proteger y la pantalla
+ * queda abierta horas.
+ */
+Route::get('/consola', [ConsolaController::class, 'index'])->name('consola');
+Route::get('/consola/ranking', [ConsolaController::class, 'ranking'])->name('consola.ranking');
+Route::post('/consola/verificar', [ConsolaController::class, 'verificar'])
+    ->middleware('throttle:20,1')->name('consola.verificar');
+
 Route::middleware(ParticipanteAutenticado::class)->group(function () {
 
     Route::get('/instrucciones', [PartidaController::class, 'instrucciones'])->name('instrucciones');
@@ -40,7 +52,7 @@ Route::middleware(ParticipanteAutenticado::class)->group(function () {
     Route::get('/mision/{slug}/resultado', [PartidaController::class, 'resultado'])->name('mision.resultado');
 
     Route::get('/codigo-final', [PartidaController::class, 'final'])->name('final');
-    Route::post('/codigo-final', [PartidaController::class, 'verificarCodigo'])->name('final.verificar');
+    Route::get('/codigo-final/estado', [PartidaController::class, 'estadoFinal'])->name('final.estado');
 
     Route::get('/amenaza-contenida', [PartidaController::class, 'victoria'])->name('victoria');
     Route::get('/ranking', [PartidaController::class, 'ranking'])->name('ranking');
@@ -103,6 +115,11 @@ Route::get('/archivos/{ruta}', function (string $ruta) {
 
 Route::prefix('dashboard')->group(function () {
 
+    // Pantalla de proyección de cada estación: pública, para dejarla abierta en
+    // el televisor de la sala sin sesión. Solo muestra el QR y las instrucciones;
+    // el código de la estación nunca sale en ella.
+    Route::get('/misiones/{mision}/proyectar', [MisionController::class, 'proyectar'])->name('dashboard.misiones.proyectar');
+
     Route::middleware('guest')->group(function () {
         Route::get('/login', [SesionController::class, 'formulario'])->name('dashboard.login');
         Route::post('/login', [SesionController::class, 'entrar'])->middleware('throttle:6,1');
@@ -125,7 +142,6 @@ Route::prefix('dashboard')->group(function () {
         Route::get('/misiones/{mision}', [MisionController::class, 'editar'])->name('dashboard.misiones.editar');
         Route::put('/misiones/{mision}', [MisionController::class, 'actualizar'])->name('dashboard.misiones.actualizar');
         Route::post('/misiones/{mision}/qr', [MisionController::class, 'regenerarQr'])->name('dashboard.misiones.qr.regenerar');
-        Route::get('/misiones/{mision}/proyectar', [MisionController::class, 'proyectar'])->name('dashboard.misiones.proyectar');
 
         // Instrucciones (briefing)
         Route::get('/briefing', [ContenidoController::class, 'briefing'])->name('dashboard.briefing');

@@ -233,6 +233,9 @@ export function iniciarProyeccion() {
 
     // F = pantalla completa · ← / → = misión anterior / siguiente
     document.addEventListener('keydown', (e) => {
+        // En la consola se escribe el código: la F es una letra más.
+        if (e.target.closest?.('input, textarea')) return;
+
         if (e.key === 'f' || e.key === 'F') alternarPantallaCompleta();
         if (e.key === 'ArrowLeft' && cuerpo.dataset.anterior) window.location.href = cuerpo.dataset.anterior;
         if (e.key === 'ArrowRight' && cuerpo.dataset.siguiente) window.location.href = cuerpo.dataset.siguiente;

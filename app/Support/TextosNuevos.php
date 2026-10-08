@@ -51,6 +51,47 @@ final class TextosNuevos
         ['mision', 'mision.validar',         'Validar código',                       'Botón que envía el código', false],
     ];
 
+    /** Código final: se ve en el celular y se digita en la consola de la sala. */
+    public const CONSOLA = [
+        ['final', 'final.ir_consola',
+            'Ve a la consola de recuperación de la sala y digita tu código para revertir el ataque.',
+            'Aviso bajo el código completo, en el celular', true],
+        ['consola', 'consola.titulo',        'Consola de recuperación',                   'Título de la pantalla proyectada', false],
+        ['consola', 'consola.instruccion',   'Digita el código de recuperación que aparece en tu celular', 'Instrucción principal', false],
+        ['consola', 'consola.exito_titulo',  'Amenaza contenida',                         'Título al acertar el código', false],
+        ['consola', 'consola.error_titulo',  'Acceso denegado',                           'Título al fallar el código', false],
+        ['consola', 'consola.error_texto',   'El código no es válido. Revisa tu celular e inténtalo de nuevo.', 'Texto al fallar el código', true],
+        ['consola', 'consola.top_titulo',    'Top 10',                                    'Título del ranking', false],
+        ...self::CONSOLA_DETALLE,
+    ];
+
+    /** Resto de los textos de la consola (se agregaron después). */
+    public const CONSOLA_DETALLE = [
+        ['consola', 'consola.estado_sistema', 'Sistemas cifrados · esperando código',     'Etiqueta roja de la esquina superior', false],
+        ['consola', 'consola.terminal',       'recovery@core — /decrypt',                 'Texto de la barra de la ventana', false],
+        ['consola', 'consola.ayuda_escribir', 'escribe',                                  'Ayuda junto a las teclas A–Z / 0–9', false],
+        ['consola', 'consola.ayuda_borrar',   'borra',                                    'Ayuda junto a la tecla de borrar', false],
+        ['consola', 'consola.ayuda_ejecutar', 'ejecuta',                                  'Ayuda junto a la tecla Enter', false],
+        ['consola', 'consola.boton',          'Ejecutar recuperación',                    'Botón para enviar el código', false],
+        ['consola', 'consola.faltan',         'Faltan {faltan} caracteres.',              'Aviso si el código está incompleto. Comodín: {faltan}', false],
+        ['consola', 'consola.vacio',          'Escribe tu código.',                       'Aviso si se envía sin escribir nada', false],
+        ['consola', 'consola.verificando',    'Descifrando sistemas',                     'Texto mientras se valida el código', false],
+        ['consola', 'consola.log',
+            "verificando firma…\nensamblando fragmentos…\nabriendo volúmenes cifrados…",
+            'Mensajes que se escriben mientras se valida, uno por línea', true],
+        ['consola', 'consola.exito_saludo',   '¡Bien hecho, {nombre}!',                   'Saludo al acertar. Comodín: {nombre}', false],
+        ['consola', 'consola.dato_tiempo',    'Tiempo',                                   'Etiqueta del tiempo al acertar', false],
+        ['consola', 'consola.dato_puesto',    'Puesto',                                   'Etiqueta del puesto al acertar', false],
+        ['consola', 'consola.exito_top',      '¡Entraste al TOP 10 en el puesto #{puesto}!', 'Mensaje si entra al top 10. Comodín: {puesto}', false],
+        ['consola', 'consola.exito_puesto',   'Vas en el puesto #{puesto} de {total}.',   'Mensaje si no entra al top 10. Comodines: {puesto}, {total}', false],
+        ['consola', 'consola.exito_repetido', 'Tu código ya estaba registrado. Vas en el puesto #{puesto} de {total}.', 'Mensaje si el código ya se había digitado. Comodines: {puesto}, {total}', true],
+        ['consola', 'consola.limite',         'Demasiados intentos seguidos. Espera un minuto e inténtalo de nuevo.', 'Error al superar 20 intentos por minuto', true],
+        ['consola', 'consola.sin_conexion',   'No hay conexión con el servidor. Inténtalo de nuevo.', 'Error si se cae la red', true],
+        ['consola', 'consola.top_rotulo',     'Ranking en vivo',                          'Texto pequeño sobre el título del ranking', false],
+        ['consola', 'consola.top_vacio',      'Aún nadie ha recuperado los sistemas. ¡Sé el primero!', 'Ranking sin jugadores', true],
+        ['consola', 'consola.top_criterio',   'Más misiones superadas primero; a igualdad, menor tiempo.', 'Nota al pie del ranking', true],
+    ];
+
     public const CERTIFICADO = [
         ['certificado', 'certificado.texto_completo',
             'Por superar {misiones} del escape room de ciberseguridad, analizar las evidencias del incidente y recuperar el código {codigo} que permitió revertir el ataque antes de que se materializara.',
@@ -68,7 +109,7 @@ final class TextosNuevos
     /** @return array<int, array{0:string,1:string,2:string,3:string,4:bool}> */
     public static function todos(): array
     {
-        return [...self::LOGIN, ...self::HUB, ...self::MISION, ...self::PRESENCIAL, ...self::CERTIFICADO];
+        return [...self::LOGIN, ...self::HUB, ...self::MISION, ...self::PRESENCIAL, ...self::CONSOLA, ...self::CERTIFICADO];
     }
 
     /**

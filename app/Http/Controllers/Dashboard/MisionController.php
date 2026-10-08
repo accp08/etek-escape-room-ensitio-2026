@@ -108,7 +108,7 @@ class MisionController extends Controller
     /**
      * Pantalla para proyectar en un televisor junto a la estación: el QR en
      * grande y las instrucciones de la misión. Se navega entre misiones con
-     * las flechas del teclado.
+     * las flechas del teclado. Es pública: no requiere sesión del dashboard.
      *
      * @return View|JsonResponse
      */

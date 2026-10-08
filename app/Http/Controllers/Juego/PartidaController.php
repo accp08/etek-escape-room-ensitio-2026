@@ -8,6 +8,7 @@ use App\Models\PartidaMision;
 use App\Models\PasoBriefing;
 use App\Services\Juego;
 use App\Support\Bitacora;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -204,49 +205,44 @@ class PartidaController extends Controller
 
     /* ---------------------------------------------------------------- */
 
+    /**
+     * Código de recuperación en el celular. Aquí solo se muestra: se digita en
+     * la consola que se proyecta en la sala (ConsolaController).
+     */
     public function final(Request $peticion)
     {
         $partida = $this->partida($peticion);
+
+        if ($partida->codigoIngresado()) {
+            return redirect()->route('victoria');
+        }
+
+        $completo = $this->juego->todasLasMisionesSuperadas($partida);
 
         return view('game.final', [
             'partida' => $partida,
             'tablero' => $this->juego->tablero($partida),
             'obtenido' => $this->juego->codigoObtenido($partida),
+            'completo' => $completo,
         ]);
     }
 
-    public function verificarCodigo(Request $peticion): RedirectResponse
+    /** El celular pregunta si ya se digitó el código en la consola, para pasar a la victoria. */
+    public function estadoFinal(Request $peticion): JsonResponse
     {
-        $peticion->validate(['codigo' => ['required', 'string', 'max:40']]);
-        $partida = $this->partida($peticion);
-
-        if (! $this->juego->todasLasMisionesSuperadas($partida)
-            || ! $this->juego->codigoCorrecto($this->participante($peticion), $peticion->input('codigo'))) {
-            Bitacora::juego('codigo.incorrecto', 'Código de recuperación incorrecto', [], 'aviso');
-
-            return back()->withErrors([
-                'codigo' => txt('final.error', 'El código no es correcto. Revisa los fragmentos obtenidos.'),
-            ]);
-        }
-
-        $this->juego->cerrarPartidaSiTermino($partida);
-
-        $partida->update([
-            'estado' => 'completada',
-            'finalizada_en' => $partida->finalizada_en ?? now(),
+        return response()->json([
+            'ingresado' => $this->partida($peticion)->refresh()->codigoIngresado(),
         ]);
-
-        Bitacora::juego('partida.completada', 'Completó la experiencia', [
-            'aciertos' => $partida->aciertos,
-            'segundos' => $partida->segundos_jugados,
-        ]);
-
-        return redirect()->route('victoria');
     }
 
     public function victoria(Request $peticion)
     {
         $partida = $this->partida($peticion);
+
+        // Con todas las misiones superadas, la victoria llega al digitar el código en la consola.
+        if (! $partida->codigoIngresado() && $this->juego->todasLasMisionesSuperadas($partida)) {
+            return redirect()->route('final');
+        }
 
         return view('game.victoria', [
             'partida' => $partida,
@@ -272,8 +268,7 @@ class PartidaController extends Controller
             Bitacora::juego('certificado.visto', 'Abrió su certificado');
         }
 
-        $puesto = $this->juego->ranking(500)
-            ->firstWhere(fn ($f) => $f['partida']->id === $partida->id)['puesto'] ?? null;
+        $puesto = $this->juego->puestoDe($partida);
 
         return view('game.certificado', [
             'participante' => $this->participante($peticion),

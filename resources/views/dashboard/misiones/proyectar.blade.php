@@ -3,6 +3,8 @@
      Todo se mide con --u (ver .proyeccion en app.css), así se ve igual en un
      portátil que en un televisor 4K.
 
+     Es pública (sin sesión) para dejarla abierta en el televisor.
+
      Teclado: F = pantalla completa · ← / → = misión anterior / siguiente. --}}
 <!DOCTYPE html>
 <html lang="es" class="dark">
@@ -164,14 +166,18 @@
             </a>
         @endif
 
-        <a href="{{ route('dashboard.misiones.editar', $mision) }}" class="proy-boton" title="Volver al dashboard">
-            @include('partials.icono', ['n' => 'x', 'c' => 'w-4 h-4'])
-        </a>
+        @auth
+            <a href="{{ route('dashboard.misiones.editar', $mision) }}" class="proy-boton" title="Volver al dashboard">
+                @include('partials.icono', ['n' => 'x', 'c' => 'w-4 h-4'])
+            </a>
+        @endauth
     </nav>
 
-    @unless ($mision->codigo_presencial)
-        {{-- Solo lo ve quien proyecta: desaparece junto con los controles. --}}
-        <p class="proy-aviso" data-proy-controles>Esta misión aún no tiene código: nadie podrá superarla.</p>
-    @endunless
+    @auth
+        @unless ($mision->codigo_presencial)
+            {{-- Solo para el administrador: desaparece junto con los controles. --}}
+            <p class="proy-aviso" data-proy-controles>Esta misión aún no tiene código: nadie podrá superarla.</p>
+        @endunless
+    @endauth
 </body>
 </html>

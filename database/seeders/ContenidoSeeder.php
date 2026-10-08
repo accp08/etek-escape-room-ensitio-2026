@@ -106,13 +106,14 @@ class ContenidoSeeder extends Seeder
             ['hub', 'hub.estado_ataque',     'Ataque en curso',                         'Etiqueta del panel superior', false],
             ['hub', 'hub.descripcion',       'Sistemas comprometidos. Recupera los fragmentos del código de recuperación para revertir el cifrado.', 'Texto del panel superior', true],
             ['hub', 'hub.misiones',          'Misiones disponibles',                    'Título de la lista', false],
-            ['hub', 'hub.boton_codigo',      'Ingresar código de recuperación',         'Botón inferior', false],
+            ['hub', 'hub.boton_codigo',      'Ver mi código de recuperación',           'Botón inferior', false],
             ['hub', 'hub.proximamente',      'Próximamente',                            'Etiqueta de misiones no jugables', false],
             ...TextosNuevos::HUB,
 
             ['mision', 'mision.objetivo',    'Tu objetivo',                             'Título del recuadro de instrucciones', false],
             ...TextosNuevos::MISION,
             ...TextosNuevos::PRESENCIAL,
+            ...TextosNuevos::CONSOLA,
 
             ['resultado', 'resultado.exito_titulo',     'Fragmento recuperado',         'Título al superar', false],
             ['resultado', 'resultado.exito_texto',      'Descifraste una parte del código de recuperación. Consérvala: la necesitarás al final.', 'Texto al superar', true],
@@ -124,7 +125,7 @@ class ContenidoSeeder extends Seeder
             ['resultado', 'resultado.tiempo_texto',     'No alcanzaste a completar la misión dentro del tiempo asignado.', 'Texto al agotarse el tiempo', true],
 
             ['final', 'final.titulo',        'Revierte el ataque',                      'Título de la consola final', false],
-            ['final', 'final.descripcion',   'Ensambla los fragmentos en el orden de las misiones para liberar los sistemas cifrados.', 'Texto de la consola', true],
+            ['final', 'final.descripcion',   'Cada misión superada te entregó un fragmento. Juntos forman tu código para liberar los sistemas cifrados.', 'Texto de la pantalla del código', true],
             ['final', 'final.boton',         'Ejecutar recuperación',                   'Botón de la consola', false],
             ['final', 'final.error',         'El código no es correcto. Revisa los fragmentos obtenidos.', 'Mensaje de código inválido', true],
 

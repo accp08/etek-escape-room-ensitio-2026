@@ -34,7 +34,8 @@ Base de datos MySQL `escape-room` (configurada en `.env`).
 | `/mision/{slug}/activar/{token}` | — | Destino del QR: activa la misión y arranca el cronómetro |
 | `/mision/{slug}/jugar` | `missions/codigo` | Ventana del código, con el cronómetro corriendo |
 | `/mision/{slug}/resultado` | `missions/resultado` | Resultado: superada, reintento, fallada o tiempo agotado |
-| `/codigo-final` | `game/final` | Consola de recuperación |
+| `/codigo-final` | `game/final` | El jugador ve su código completo; pasa sola a la victoria al digitarlo en la consola |
+| `/consola` | `game/consola` | **Pública, para proyectar.** Consola donde se digita el código, con el top 10 en vivo |
 | `/amenaza-contenida` | `game/victoria` | Cierre de la experiencia |
 | `/ranking` | `game/ranking` | Ranking general |
 | `/certificado` | `game/certificado` | Certificado de participación, exportable a PDF, y video de cierre |
@@ -154,6 +155,25 @@ participante entra con **documento + código**.
 > El lector de la app usa la cámara, que el navegador solo permite en **HTTPS** (o
 > `localhost`). Sin HTTPS sigue funcionando el escaneo con la cámara del celular.
 > En iPhone (sin `BarcodeDetector`) la lectura la hace `jsqr`, que se carga solo en esa pantalla.
+
+### Consola de recuperación (cierre)
+
+Al superar todas las misiones, el celular muestra el **código completo** (un
+fragmento de 2 caracteres por misión) pero no lo recibe: se digita en la
+**consola** (`/consola`), una pantalla pública que se proyecta en la sala con un
+teclado conectado.
+
+- El código identifica al jugador (cada fragmento es único por misión), así que no
+  hace falta iniciar sesión. Se valida en el servidor.
+- Pantalla dividida: a la izquierda la terminal con las casillas; a la derecha el
+  **top 10 en vivo**, que se refresca cada 15 s.
+- **Correcto:** animación de «Amenaza contenida» con confeti y sonido, el tiempo y el
+  puesto. Si entra al top 10, su fila se resalta al instante; si no, le dice en qué
+  puesto va. A los 12 s (o con Enter) queda lista para el siguiente.
+- **Incorrecto:** alarma en pantalla, «Acceso denegado» y sonido de error. Se limita a
+  20 intentos por minuto.
+- El celular consulta cada 4 s y pasa solo a la victoria cuando la consola acepta el
+  código.
 
 ### Pantalla de proyección
 

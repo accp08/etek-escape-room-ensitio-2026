@@ -12,10 +12,16 @@
         las demás aparecen en el centro de mando como «Próximamente».
     </p>
 
-    <a href="{{ route('dashboard.misiones.qr') }}" target="_blank" class="btn btn-ghost mt-4 !w-auto">
-        @include('partials.icono', ['n' => 'file', 'c' => 'w-4 h-4'])
-        Imprimir los QR de las estaciones
-    </a>
+    <div class="mt-4 flex flex-wrap gap-2.5">
+        <a href="{{ route('consola') }}" target="_blank" class="btn btn-primary !w-auto">
+            @include('partials.icono', ['n' => 'trophy', 'c' => 'w-4 h-4'])
+            Abrir la consola de recuperación
+        </a>
+        <a href="{{ route('dashboard.misiones.qr') }}" target="_blank" class="btn btn-ghost !w-auto">
+            @include('partials.icono', ['n' => 'file', 'c' => 'w-4 h-4'])
+            Imprimir los QR de las estaciones
+        </a>
+    </div>
 
     <div class="mt-5 space-y-2.5">
         @foreach ($misiones as $mision)

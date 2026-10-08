@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\ParticipanteAutenticado;
 use App\Models\Mision;
 use App\Models\Participante;
 use App\Services\Juego;
@@ -64,7 +63,7 @@ class CodigosPorParticipanteTest extends TestCase
         $beto = $this->participante('2');
 
         $this->assertCount(2, $ana->codigos);
-        $this->assertSame(3, strlen($ana->codigos->first()->fragmento));
+        $this->assertSame(2, strlen($ana->codigos->first()->fragmento));
         $this->assertNotSame(
             $ana->asegurarCodigos()->get($uno->id),
             $beto->asegurarCodigos()->get($uno->id),
@@ -95,9 +94,9 @@ class CodigosPorParticipanteTest extends TestCase
         $participante = $this->participante('1');
         $partida = $this->juego->crearPartida($participante);
 
-        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $participante->id])
-            ->post('/codigo-final', ['codigo' => $this->juego->codigoCompleto($participante)])
-            ->assertSessionHasErrors('codigo');
+        $this->postJson('/consola/verificar', ['codigo' => $this->juego->codigoCompleto($participante)])
+            ->assertStatus(422)
+            ->assertJson(['resultado' => 'incorrecto']);
 
         $this->assertSame('en_curso', $partida->refresh()->estado);
     }

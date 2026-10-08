@@ -63,9 +63,7 @@ class PartidaMision extends Model
             return $this->mision->duracion;
         }
 
-        $transcurridos = now()->diffInSeconds($this->iniciada_en, absolute: true);
-
-        return max(0, $this->mision->duracion - $transcurridos);
+        return max(0, $this->mision->duracion - $this->transcurridos());
     }
 
     public function sinTiempo(): bool
@@ -80,7 +78,13 @@ class PartidaMision extends Model
             return 0;
         }
 
-        return min($this->mision->duracion, now()->diffInSeconds($this->iniciada_en, absolute: true));
+        return min($this->mision->duracion, $this->transcurridos());
+    }
+
+    /** Segundos enteros desde que arrancó el cronómetro (Carbon los da con decimales). */
+    private function transcurridos(): int
+    {
+        return (int) floor(now()->diffInSeconds($this->iniciada_en, absolute: true));
     }
 
     /** ¿Le queda alguna oportunidad dentro de esta ronda? */
