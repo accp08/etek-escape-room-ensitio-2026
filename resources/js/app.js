@@ -245,11 +245,47 @@ function iniciarTextos(form) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Presencia (celular) y jugadores en línea (dashboard)                */
+/* ------------------------------------------------------------------ */
+
+// Mientras la pantalla está a la vista, el celular avisa que sigue ahí.
+function iniciarPresencia() {
+    const url = document.body.dataset.presencia;
+    if (!url) return;
+
+    const latir = () => {
+        if (document.visibilityState !== 'visible') return;
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
+    };
+
+    setInterval(latir, 30000);
+    document.addEventListener('visibilitychange', latir);
+}
+
+// El dashboard vuelve a pedir la sección cada pocos segundos.
+function iniciarEnLinea() {
+    const seccion = document.querySelector('[data-en-linea]');
+    if (!seccion) return;
+
+    setInterval(async () => {
+        if (document.visibilityState !== 'visible') return;
+        try {
+            const respuesta = await fetch(seccion.dataset.enLinea, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (respuesta.ok) seccion.innerHTML = await respuesta.text();
+        } catch {
+            // Sin red: se queda lo último que se pintó.
+        }
+    }, 10000);
+}
+
+/* ------------------------------------------------------------------ */
 /* Arranque                                                            */
 /* ------------------------------------------------------------------ */
 
 document.addEventListener('DOMContentLoaded', () => {
     iniciarCronometro();
+    iniciarPresencia();
+    iniciarEnLinea();
 
     const briefing = document.querySelector('[data-briefing]');
     if (briefing) iniciarBriefing(briefing);

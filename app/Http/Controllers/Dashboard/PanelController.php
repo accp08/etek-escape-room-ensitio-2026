@@ -20,7 +20,14 @@ class PanelController extends Controller
             'actividad' => $estadisticas->actividadReciente(),
             'pulso' => $estadisticas->pulsoBitacora(),
             'ranking' => $juego->ranking(5),
+            'enLinea' => $estadisticas->jugadoresEnLinea(),
         ]);
+    }
+
+    /** Fragmento «Jugadores en línea», que el dashboard vuelve a pedir cada pocos segundos. */
+    public function enLinea(Estadisticas $estadisticas)
+    {
+        return view('dashboard.en-linea', ['enLinea' => $estadisticas->jugadoresEnLinea()]);
     }
 
     /** Bitácora completa, con filtros. */

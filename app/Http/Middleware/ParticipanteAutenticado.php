@@ -35,6 +35,45 @@ class ParticipanteAutenticado
         // Disponible como $peticion->participante() en los controladores.
         $peticion->attributes->set('participante', $participante);
 
+        $this->registrarPresencia($peticion, $participante);
+
         return $siguiente($peticion);
+    }
+
+    /**
+     * Anota cuándo se vio al participante y en qué pantalla está, para
+     * «Jugadores en línea» del dashboard. Para no escribir en cada clic, solo
+     * guarda si cambió de pantalla o si el último registro ya tiene unos segundos.
+     */
+    private function registrarPresencia(Request $peticion, Participante $participante): void
+    {
+        $ubicacion = self::ubicacionDe($peticion) ?? $participante->ubicacion;
+
+        $reciente = $participante->visto_en?->gt(now()->subSeconds(20)) ?? false;
+
+        if ($reciente && $ubicacion === $participante->ubicacion) {
+            return;
+        }
+
+        Participante::withoutTimestamps(fn () => $participante->forceFill([
+            'visto_en' => now(),
+            'ubicacion' => $ubicacion,
+        ])->saveQuietly());
+    }
+
+    /**
+     * Pantalla del juego según la ruta: «hub», «final», «mision:phishing»…
+     * Null para las peticiones de fondo (latido, sondeos), que no cambian de pantalla.
+     */
+    private static function ubicacionDe(Request $peticion): ?string
+    {
+        $ruta = (string) $peticion->route()?->getName();
+
+        return match (true) {
+            str_starts_with($ruta, 'mision') => 'mision:'.$peticion->route('slug'),
+            in_array($ruta, ['presencia', 'final.estado', 'certificado.descargado'], true) => null,
+            $ruta === '' => null,
+            default => $ruta,
+        };
     }
 }

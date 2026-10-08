@@ -13,6 +13,19 @@ use Illuminate\Support\Collection;
 /** Cifras que alimentan el dashboard general. */
 class Estadisticas
 {
+    /** Minutos sin actividad tras los cuales un participante deja de contar como «en línea». */
+    public const MINUTOS_EN_LINEA = 2;
+
+    /** Pantallas del juego que no son misiones, con el nombre que se muestra. */
+    private const PANTALLAS = [
+        'hub' => 'Centro de mando',
+        'instrucciones' => 'Instrucciones',
+        'final' => 'Código final',
+        'victoria' => 'Victoria',
+        'ranking' => 'Ranking',
+        'certificado' => 'Certificado',
+    ];
+
     /** Tarjetas de cabecera. */
     public function resumen(): array
     {
@@ -108,6 +121,76 @@ class Estadisticas
             'info' => Registro::where('created_at', '>=', $desde)->where('nivel', 'info')->count(),
             'aviso' => Registro::where('created_at', '>=', $desde)->where('nivel', 'aviso')->count(),
             'alerta' => Registro::where('created_at', '>=', $desde)->where('nivel', 'alerta')->count(),
+        ];
+    }
+
+    /**
+     * Quién está jugando ahora y dónde. Un participante con el cronómetro de
+     * una misión corriendo cuenta en esa misión aunque su celular esté en otra
+     * pantalla: físicamente está en la estación.
+     *
+     * @return array{
+     *     total: int,
+     *     resolviendo: int,
+     *     escenarios: Collection<int, array{nombre: string, cantidad: int, mision: bool}>,
+     *     jugadores: Collection<int, array{nombre: string, area: ?string, lugar: string, resolviendo: bool, visto_en: Carbon}>
+     * }
+     */
+    public function jugadoresEnLinea(): array
+    {
+        $conectados = Participante::where('activo', true)
+            ->where('visto_en', '>=', now()->subMinutes(self::MINUTOS_EN_LINEA))
+            ->orderByDesc('visto_en')
+            ->get();
+
+        $misiones = Mision::jugables()->get();
+
+        // participante_id => misión con el cronómetro corriendo
+        $enCurso = PartidaMision::with(['mision', 'partida'])
+            ->where('estado', 'en_curso')
+            ->whereNotNull('iniciada_en')
+            ->whereHas('partida', fn ($c) => $c->whereIn('participante_id', $conectados->modelKeys()))
+            ->get()
+            ->reject(fn (PartidaMision $avance) => $avance->sinTiempo())
+            ->mapWithKeys(fn (PartidaMision $avance) => [$avance->partida->participante_id => $avance->mision]);
+
+        $jugadores = $conectados->map(function (Participante $participante) use ($enCurso, $misiones) {
+            $mision = $enCurso->get($participante->id);
+            $ubicacion = (string) $participante->ubicacion;
+
+            $lugar = match (true) {
+                $mision !== null => $mision->titulo,
+                str_starts_with($ubicacion, 'mision:') => $misiones->firstWhere('slug', substr($ubicacion, 7))?->titulo ?? 'Misión',
+                default => self::PANTALLAS[$ubicacion] ?? 'Juego',
+            };
+
+            return [
+                'nombre' => $participante->nombre,
+                'area' => $participante->area,
+                'lugar' => $lugar,
+                'resolviendo' => $mision !== null,
+                'visto_en' => $participante->visto_en,
+            ];
+        });
+
+        $porLugar = $jugadores->countBy('lugar');
+
+        $escenarios = $misiones
+            ->map(fn (Mision $mision) => ['nombre' => $mision->titulo, 'mision' => true])
+            ->push(['nombre' => self::PANTALLAS['hub'], 'mision' => false])
+            ->concat(
+                $porLugar->keys()
+                    ->diff($misiones->pluck('titulo')->push(self::PANTALLAS['hub']))
+                    ->map(fn (string $lugar) => ['nombre' => $lugar, 'mision' => false])
+            )
+            ->map(fn (array $escenario) => $escenario + ['cantidad' => $porLugar->get($escenario['nombre'], 0)])
+            ->values();
+
+        return [
+            'total' => $jugadores->count(),
+            'resolviendo' => $jugadores->where('resolviendo', true)->count(),
+            'escenarios' => $escenarios,
+            'jugadores' => $jugadores,
         ];
     }
 }

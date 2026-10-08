@@ -35,6 +35,11 @@
     @endforeach
 </div>
 
+{{-- Jugadores en línea --}}
+<section class="panel mt-4 p-5" data-en-linea="{{ route('dashboard.en-linea') }}" aria-live="polite">
+    @include('dashboard.en-linea')
+</section>
+
 <div class="mt-4 grid items-start gap-4 xl:grid-cols-[1.4fr_1fr]">
 
     {{-- Partidas por día --}}

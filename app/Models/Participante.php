@@ -15,7 +15,7 @@ class Participante extends Model
 
     protected function casts(): array
     {
-        return ['activo' => 'boolean'];
+        return ['activo' => 'boolean', 'visto_en' => 'datetime'];
     }
 
     /** Cada participante nace con su propio fragmento para cada misión. */

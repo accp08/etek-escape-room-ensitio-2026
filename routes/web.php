@@ -41,6 +41,7 @@ Route::post('/consola/verificar', [ConsolaController::class, 'verificar'])
 Route::middleware(ParticipanteAutenticado::class)->group(function () {
 
     Route::get('/instrucciones', [PartidaController::class, 'instrucciones'])->name('instrucciones');
+    Route::get('/presencia', [PartidaController::class, 'presencia'])->name('presencia');
     Route::get('/centro-de-mando', [PartidaController::class, 'hub'])->name('hub');
 
     Route::get('/mision/{slug}', [PartidaController::class, 'mision'])->name('mision');
@@ -130,6 +131,7 @@ Route::prefix('dashboard')->group(function () {
         // Panel general y bitácora
         Route::get('/', [PanelController::class, 'index'])->name('dashboard');
         Route::get('/registros', [PanelController::class, 'registros'])->name('dashboard.registros');
+        Route::get('/en-linea', [PanelController::class, 'enLinea'])->name('dashboard.en-linea');
 
         // Empresa (marca)
         Route::get('/empresa', [EmpresaController::class, 'editar'])->name('dashboard.empresa');

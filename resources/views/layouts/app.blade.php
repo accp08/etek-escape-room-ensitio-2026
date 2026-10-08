@@ -21,7 +21,8 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+{{-- Con sesión de juego, el celular late para que el dashboard lo vea «en línea». --}}
+<body @if (request()->attributes->has('participante')) data-presencia="{{ route('presencia') }}" @endif>
     <div class="stage">
         <div class="device">
             <div class="device-notch"></div>

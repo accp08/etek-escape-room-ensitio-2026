@@ -11,6 +11,7 @@ use App\Support\Bitacora;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PartidaController extends Controller
 {
@@ -225,6 +226,12 @@ class PartidaController extends Controller
             'obtenido' => $this->juego->codigoObtenido($partida),
             'completo' => $completo,
         ]);
+    }
+
+    /** Latido del celular: mantiene al participante «en línea» mientras la pantalla está abierta. */
+    public function presencia(): Response
+    {
+        return response()->noContent();
     }
 
     /** El celular pregunta si ya se digitó el código en la consola, para pasar a la victoria. */
