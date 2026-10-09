@@ -39,11 +39,16 @@
         @endif
 
         @if ($metodoAcceso === 'outlook')
-            <a href="{{ route('acceso.outlook') }}" class="btn btn-primary mt-2">
-                <span class="font-bold">Microsoft</span>
-                Iniciar sesión con Outlook
+            <a href="{{ route('acceso.outlook') }}" class="btn-outlook mt-2">
+                <span aria-hidden="true" class="outlook-logo">
+                    <span></span><span></span><span></span><span></span>
+                </span>
+                <span>Continuar con Microsoft</span>
             </a>
-            <p class="mt-3 text-center text-[11px] leading-relaxed text-muted">Usa tu cuenta de un dominio autorizado.</p>
+            <p class="mt-4 flex items-center justify-center gap-2 text-center text-[11px] leading-relaxed text-muted">
+                <span class="size-1.5 rounded-full bg-cyan-300"></span>
+                Acceso institucional · Solo dominios autorizados
+            </p>
         @else
         <form action="{{ route('acceso') }}" method="POST" class="space-y-4">
             @csrf
