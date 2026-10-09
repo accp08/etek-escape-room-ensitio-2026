@@ -169,7 +169,22 @@ class ContenidoController extends Controller
             'juego_titulo' => ['required', 'string', 'max:80'],
             'juego_subtitulo' => ['nullable', 'string', 'max:120'],
             'video_final' => ['nullable', 'string', 'max:160'],
+            'metodo_acceso' => ['required', 'in:correo,outlook'],
+            'dominios_outlook' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        if ($datos['metodo_acceso'] === 'outlook') {
+            $dominios = preg_split('/[\s,;]+/', mb_strtolower(trim($datos['dominios_outlook'] ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+            $dominios = array_values(array_unique(array_map(fn (string $dominio): string => ltrim($dominio, '@'), $dominios)));
+
+            if ($dominios === [] || collect($dominios)->contains(fn (string $dominio): bool => ! filter_var('usuario@'.$dominio, FILTER_VALIDATE_EMAIL))) {
+                return back()->withErrors(['dominios_outlook' => 'Indica uno o más dominios válidos, separados por coma o salto de línea.'])->withInput();
+            }
+
+            $datos['dominios_outlook'] = implode(',', $dominios);
+        } else {
+            unset($datos['dominios_outlook']);
+        }
 
         foreach ($datos as $clave => $valor) {
             Ajuste::updateOrCreate(['clave' => $clave], ['valor' => (string) $valor]);

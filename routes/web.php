@@ -25,6 +25,8 @@ use League\Flysystem\PathTraversalDetected;
 
 Route::get('/', [AccesoController::class, 'formulario'])->name('login');
 Route::post('/acceso', [AccesoController::class, 'entrar'])->middleware('throttle:10,1')->name('acceso');
+Route::get('/acceso/outlook', [AccesoController::class, 'iniciarOutlook'])->middleware('throttle:10,1')->name('acceso.outlook');
+Route::get('/acceso/outlook/retorno', [AccesoController::class, 'retornoOutlook'])->name('acceso.outlook.retorno');
 Route::post('/salir', [AccesoController::class, 'salir'])->name('salir');
 
 /*

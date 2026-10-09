@@ -64,7 +64,33 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-6">Guardar parámetros</button>
     </section>
+    <section class="panel p-5 md:col-span-2">
+        <p class="eyebrow">Acceso al juego</p>
+        <h2 class="mt-1 text-[18px] font-black text-ink">Método de inicio de sesión</h2>
+        <div class="mt-5 grid gap-4 md:grid-cols-2">
+            <div>
+                <label for="metodo_acceso" class="field-label">¿Cómo ingresarán los participantes?</label>
+                <select id="metodo_acceso" name="metodo_acceso" class="field" required>
+                    <option value="correo" @selected($v('metodo_acceso', 'correo') === 'correo')>Correo y contraseña actual</option>
+                    <option value="outlook" @selected($v('metodo_acceso') === 'outlook')>Cuenta Microsoft Outlook</option>
+                </select>
+                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">Con Outlook, cualquier cuenta de un dominio permitido puede ingresar. El sistema crea su participante automáticamente en el primer acceso.</p>
+            </div>
+            <div id="configuracion-dominios-outlook" @class(['hidden' => $v('metodo_acceso') !== 'outlook'])>
+                <label for="dominios_outlook" class="field-label">Dominios permitidos</label>
+                <textarea id="dominios_outlook" name="dominios_outlook" class="field min-h-24" maxlength="2000"
+                          placeholder="empresa.com&#10;filial.com">{{ str_replace(',', "\n", $v('dominios_outlook')) }}</textarea>
+                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">Separa los dominios por coma o salto de línea. Ejemplo: empresa.com</p>
+            </div>
+        </div>
+    </section>
+    <button type="submit" class="btn btn-primary mt-6 md:col-span-2">Guardar parámetros</button>
 </form>
+<script>
+    document.getElementById('metodo_acceso')?.addEventListener('change', (evento) => {
+        const configuracion = document.getElementById('configuracion-dominios-outlook');
+        configuracion?.classList.toggle('hidden', evento.target.value !== 'outlook');
+    });
+</script>
 @endsection

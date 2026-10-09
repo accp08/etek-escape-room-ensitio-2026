@@ -38,6 +38,13 @@
             </div>
         @endif
 
+        @if ($metodoAcceso === 'outlook')
+            <a href="{{ route('acceso.outlook') }}" class="btn btn-primary mt-2">
+                <span class="font-bold">Microsoft</span>
+                Iniciar sesión con Outlook
+            </a>
+            <p class="mt-3 text-center text-[11px] leading-relaxed text-muted">Usa tu cuenta de un dominio autorizado.</p>
+        @else
         <form action="{{ route('acceso') }}" method="POST" class="space-y-4">
             @csrf
 
@@ -62,6 +69,7 @@
                 {{ txt('login.boton', 'Iniciar protocolo') }}
             </button>
         </form>
+        @endif
     </div>
 </div>
 @endsection
