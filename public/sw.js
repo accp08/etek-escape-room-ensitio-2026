@@ -23,6 +23,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
+    // Audio y video piden rangos (respuestas 206): que los maneje el navegador.
+    if (event.request.headers.has('range')) return;
 
     event.respondWith(
         fetch(event.request)

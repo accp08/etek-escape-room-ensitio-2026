@@ -86,7 +86,7 @@ Route::middleware(ParticipanteAutenticado::class)->group(function () {
 });
 
 /*
- * Archivos subidos al disco "public" (logo de la empresa, etc.). Se sirven por
+ * Archivos subidos al disco "public" (logo de la empresa, audios, etc.). Se sirven por
  * Laravel en vez de depender del symlink public/storage, que en el hosting de
  * producción no siempre existe o no se puede seguir (PUBLIC_PATH distinto).
  */
@@ -99,7 +99,9 @@ Route::get('/archivos/{ruta}', function (string $ruta) {
         abort(404);
     }
 
-    return $disco->response($ruta, headers: [
+    // response()->file (y no $disco->response) para responder peticiones por
+    // rangos: sin ellas Safari no reproduce los audios de las pantallas.
+    return response()->file($disco->path($ruta), [
         'Cache-Control' => 'public, max-age=604800',
         // Un SVG subido no puede ejecutar scripts si se abre directamente.
         'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
@@ -160,6 +162,8 @@ Route::prefix('dashboard')->group(function () {
         // Parámetros del juego
         Route::get('/ajustes', [ContenidoController::class, 'ajustes'])->name('dashboard.ajustes');
         Route::put('/ajustes', [ContenidoController::class, 'guardarAjustes'])->name('dashboard.ajustes.guardar');
+        Route::post('/ajustes/audio-consola', [ContenidoController::class, 'guardarAudioConsola'])->name('dashboard.ajustes.audio-consola');
+        Route::delete('/ajustes/audio-consola', [ContenidoController::class, 'quitarAudioConsola'])->name('dashboard.ajustes.audio-consola.quitar');
 
         // Participantes
         Route::get('/participantes', [ParticipanteController::class, 'index'])->name('dashboard.participantes');

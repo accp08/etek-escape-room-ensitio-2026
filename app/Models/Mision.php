@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Audio;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
  */
 #[Fillable([
     'slug', 'titulo', 'etiqueta', 'icono', 'brief', 'instruccion',
-    'codigo_presencial', 'token_qr', 'duracion', 'intentos', 'orden',
+    'codigo_presencial', 'token_qr', 'audio_ruta', 'duracion', 'intentos', 'orden',
     'jugable', 'visible',
 ])]
 class Mision extends Model
@@ -95,6 +96,14 @@ class Mision extends Model
     public function regenerarTokenQr(): void
     {
         $this->forceFill(['token_qr' => Str::random(32)])->save();
+    }
+
+    /* ---------------- Audio de la estación ---------------- */
+
+    /** MP3 que suena en la pantalla de proyección, o null si no tiene. */
+    public function audioUrl(): ?string
+    {
+        return Audio::url($this->audio_ruta);
     }
 
     /* ---------------- Código de la estación ---------------- */

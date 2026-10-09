@@ -5,7 +5,7 @@
 
      Es pública (sin sesión) para dejarla abierta en el televisor.
 
-     Teclado: F = pantalla completa · ← / → = misión anterior / siguiente. --}}
+     Teclado: F = pantalla completa · M = sonido · ← / → = misión anterior / siguiente. --}}
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -145,6 +145,10 @@
         </section>
     </main>
 
+    @if ($audio = $mision->audioUrl())
+        <audio src="{{ $audio }}" loop preload="auto" data-proy-audio></audio>
+    @endif
+
     {{-- Controles: se ocultan solos cuando el mouse no se mueve --}}
     <nav class="proy-controles" data-proy-controles>
         @if ($anterior)
@@ -159,6 +163,8 @@
             </svg>
             <span data-proy-pantalla-completa-texto>Pantalla completa</span>
         </button>
+
+        @includeWhen($audio, 'partials.boton-sonido')
 
         @if ($siguiente)
             <a href="{{ route('dashboard.misiones.proyectar', $siguiente) }}" class="proy-boton" title="Misión siguiente (→)">

@@ -14,7 +14,7 @@
 </a>
 
 {{-- Parámetros de la misión --}}
-<form method="POST" action="{{ route('dashboard.misiones.actualizar', $mision) }}" class="panel p-5">
+<form method="POST" action="{{ route('dashboard.misiones.actualizar', $mision) }}" enctype="multipart/form-data" class="panel p-5">
     @csrf @method('PUT')
 
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -88,6 +88,27 @@
         <div class="editor" data-editor data-vacio="Qué debe hacer en esta misión…">
             <textarea name="instruccion" data-editor-valor hidden>{{ old('instruccion', $mision->instruccion) }}</textarea>
         </div>
+    </div>
+
+    <div class="mt-4">
+        <label class="field-label">Audio de la pantalla de proyección <span class="font-normal normal-case tracking-normal text-muted">(opcional)</span></label>
+        <p class="mb-1.5 text-[11px] text-muted">MP3 de hasta {{ intdiv(\App\Support\Audio::MAX_KB, 1024) }} MB. Suena en bucle en el televisor de la estación.</p>
+
+        @if ($audio = $mision->audioUrl())
+            <div class="mb-2.5 flex flex-wrap items-center gap-3">
+                <audio controls preload="none" src="{{ $audio }}" class="h-9 max-w-full"></audio>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="quitar_audio" value="1"
+                           class="h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
+                    <span class="text-[12px] text-ink-soft">Quitar audio</span>
+                </label>
+            </div>
+        @endif
+
+        <input type="file" name="audio" accept=".mp3,audio/mpeg" class="field">
+        @if ($audio)
+            <p class="mt-1.5 text-[11px] text-muted">Sube otro archivo para reemplazar el actual.</p>
+        @endif
     </div>
 
     <div class="mt-4 flex flex-wrap gap-5">

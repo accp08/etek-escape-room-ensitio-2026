@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mision;
+use App\Support\Audio;
 use App\Support\Bitacora;
 use App\Support\HtmlSeguro;
 use Illuminate\Http\JsonResponse;
@@ -38,7 +39,17 @@ class MisionController extends Controller
             'intentos' => ['required', 'integer', 'min:0', 'max:99'],   // 0 = ilimitadas
             'orden' => ['required', 'integer', 'min:0', 'max:99'],
             'codigo_presencial' => ['nullable', 'string', 'max:40'],   // lo entrega la estación física
-        ]);
+            'audio' => Audio::reglas(),   // suena en la pantalla de proyección
+        ], Audio::mensajes('audio'));
+
+        unset($datos['audio']);
+
+        if ($peticion->hasFile('audio')) {
+            $datos['audio_ruta'] = Audio::guardar($peticion->file('audio'), $mision->slug, $mision->audio_ruta);
+        } elseif ($peticion->boolean('quitar_audio')) {
+            Audio::borrar($mision->audio_ruta);
+            $datos['audio_ruta'] = null;
+        }
 
         $datos['codigo_presencial'] = trim((string) ($datos['codigo_presencial'] ?? '')) ?: null;
 
@@ -78,6 +89,7 @@ class MisionController extends Controller
         Bitacora::dashboard('mision.editada', "Se editó la misión «{$mision->titulo}»", [
             'mision' => $mision->slug,
             'jugable' => $mision->jugable,
+            'audio' => $mision->audio_ruta,
         ]);
 
         return back()->with('exito', 'Misión actualizada.');

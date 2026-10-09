@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CodigoMision;
 use App\Models\Mision;
 use App\Services\Juego;
+use App\Support\Audio;
 use App\Support\Bitacora;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class ConsolaController extends Controller
             'misiones' => $misiones,
             'largo' => CodigoMision::largo(),
             'ranking' => $this->top(),
+            'audio' => Audio::url(ajuste('audio_consola')),
         ]);
     }
 

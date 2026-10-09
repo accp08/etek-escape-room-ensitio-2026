@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ajuste;
 use App\Models\PasoBriefing;
 use App\Models\Texto;
+use App\Support\Audio;
 use App\Support\Bitacora;
 use App\Support\Contenido;
 use Illuminate\Http\RedirectResponse;
@@ -194,5 +195,32 @@ class ContenidoController extends Controller
         Bitacora::dashboard('ajustes.guardados', 'Se actualizaron los parámetros del juego', $datos);
 
         return back()->with('exito', 'Parámetros actualizados.');
+    }
+
+    /* ---------------- Audio de la consola ---------------- */
+
+    /** MP3 que suena en bucle en la consola de recuperación (/consola). */
+    public function guardarAudioConsola(Request $peticion): RedirectResponse
+    {
+        $peticion->validate(['audio_consola' => [...Audio::reglas(), 'required']], Audio::mensajes('audio_consola'));
+
+        $ruta = Audio::guardar($peticion->file('audio_consola'), 'consola', ajuste('audio_consola'));
+        Ajuste::updateOrCreate(['clave' => 'audio_consola'], ['valor' => $ruta]);
+
+        Contenido::olvidar();
+        Bitacora::dashboard('ajustes.audio_consola', 'Se cargó el audio de la consola de recuperación', ['audio' => $ruta]);
+
+        return back()->with('exito', 'Audio de la consola actualizado.');
+    }
+
+    public function quitarAudioConsola(): RedirectResponse
+    {
+        Audio::borrar(ajuste('audio_consola'));
+        Ajuste::where('clave', 'audio_consola')->delete();
+
+        Contenido::olvidar();
+        Bitacora::dashboard('ajustes.audio_consola', 'Se quitó el audio de la consola de recuperación');
+
+        return back()->with('exito', 'Se quitó el audio de la consola.');
     }
 }

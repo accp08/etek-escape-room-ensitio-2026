@@ -178,8 +178,14 @@
     @endphp
     <script type="application/json" data-textos-consola>@json($textosJs)</script>
 
+    @if ($audio)
+        <audio src="{{ $audio }}" loop preload="auto" data-proy-audio></audio>
+    @endif
+
     {{-- Controles: se ocultan solos cuando el mouse no se mueve --}}
     <nav class="proy-controles" data-proy-controles>
+        @includeWhen($audio, 'partials.boton-sonido')
+
         <button type="button" class="proy-boton proy-boton-principal" data-proy-pantalla-completa title="Pantalla completa">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>

@@ -1991,6 +1991,7 @@
 }
 
 .proy-boton:hover { border-color: rgba(0, 229, 255, 0.6); color: var(--color-cyan); }
+.proy-boton-silenciado { border-color: rgba(255, 196, 0, 0.55); color: #ffd666; }
 .proy-boton-principal { background: linear-gradient(135deg, var(--color-cyan), var(--color-violet)); color: #05101f; border-color: transparent; }
 .proy-boton-principal:hover { color: #05101f; filter: brightness(1.08); }
 

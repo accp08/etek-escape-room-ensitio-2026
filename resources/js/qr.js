@@ -208,6 +208,78 @@ export async function pintarQrs() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Audio de las pantallas proyectadas                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Reproduce en bucle el audio [data-proy-audio], si la pantalla tiene uno.
+ * Los navegadores bloquean el autoplay con sonido hasta que alguien
+ * interactúa con la página: si se bloquea, arranca con el primer clic o
+ * tecla (por ejemplo, al poner la pantalla completa). Silenciarlo se recuerda
+ * en este navegador para todas las pantallas. Devuelve el alternador, o null.
+ */
+function iniciarAudio(cuerpo) {
+    const audio = cuerpo.querySelector('[data-proy-audio]');
+    if (!audio) return null;
+
+    const boton = cuerpo.querySelector('[data-proy-sonido]');
+    const texto = cuerpo.querySelector('[data-proy-sonido-texto]');
+    const CLAVE = 'proyeccion-silenciada';
+
+    let silenciado = false;
+    try {
+        silenciado = localStorage.getItem(CLAVE) === '1';
+    } catch {
+        // Sin almacenamiento: arranca con sonido.
+    }
+
+    const pintar = () => {
+        const sonando = !silenciado && !audio.paused;
+        boton?.classList.toggle('proy-boton-silenciado', !sonando);
+        boton?.querySelector('[data-sonido-on]')?.toggleAttribute('hidden', !sonando);
+        boton?.querySelector('[data-sonido-off]')?.toggleAttribute('hidden', sonando);
+        if (texto) texto.textContent = sonando ? 'Sonido' : 'Activar sonido';
+    };
+
+    const reproducir = () => {
+        if (silenciado) return;
+        audio.play().then(pintar).catch(pintar);
+    };
+
+    const alternar = () => {
+        // Pausado por el navegador (no por el usuario): el clic solo lo arranca.
+        silenciado = !silenciado && !audio.paused;
+        try {
+            localStorage.setItem(CLAVE, silenciado ? '1' : '0');
+        } catch {
+            // Sin almacenamiento: solo dura esta visita.
+        }
+        silenciado ? audio.pause() : reproducir();
+        pintar();
+    };
+
+    audio.addEventListener('play', pintar);
+    audio.addEventListener('pause', pintar);
+
+    // Primer gesto del usuario: desbloquea el autoplay (salvo el clic del propio botón).
+    const desbloquear = (e) => {
+        if (e.target.closest?.('[data-proy-sonido]')) return;
+        // La M fuera de un campo ya alterna el sonido.
+        if (e.type === 'keydown' && /^m$/i.test(e.key) && !e.target.closest?.('input, textarea')) return;
+        if (audio.paused) reproducir();
+    };
+    ['pointerdown', 'keydown', 'touchstart'].forEach((evento) =>
+        document.addEventListener(evento, desbloquear, { passive: true })
+    );
+
+    boton?.addEventListener('click', alternar);
+    reproducir();
+    pintar();
+
+    return alternar;
+}
+
+/* ------------------------------------------------------------------ */
 /* Pantalla de proyección de una estación (dashboard)                  */
 /* ------------------------------------------------------------------ */
 
@@ -226,6 +298,8 @@ export function iniciarProyeccion() {
         }
     };
 
+    const alternarSonido = iniciarAudio(cuerpo);
+
     botonCompleta?.addEventListener('click', alternarPantallaCompleta);
     document.addEventListener('fullscreenchange', () => {
         if (textoCompleta) textoCompleta.textContent = document.fullscreenElement ? 'Salir' : 'Pantalla completa';
@@ -237,6 +311,7 @@ export function iniciarProyeccion() {
         if (e.target.closest?.('input, textarea')) return;
 
         if (e.key === 'f' || e.key === 'F') alternarPantallaCompleta();
+        if ((e.key === 'm' || e.key === 'M') && alternarSonido) alternarSonido();
         if (e.key === 'ArrowLeft' && cuerpo.dataset.anterior) window.location.href = cuerpo.dataset.anterior;
         if (e.key === 'ArrowRight' && cuerpo.dataset.siguiente) window.location.href = cuerpo.dataset.siguiente;
     });
