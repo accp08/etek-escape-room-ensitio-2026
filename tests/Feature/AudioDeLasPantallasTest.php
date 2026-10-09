@@ -128,7 +128,7 @@ class AudioDeLasPantallasTest extends TestCase
         $this->post(route('dashboard.ajustes.audio', 'consola'), ['audio_consola' => $this->mp3()])
             ->assertRedirect(route('dashboard.login'));
 
-        $this->assertNull(ajuste('audio_consola'));
+        Storage::disk('public')->assertDirectoryEmpty('/');
     }
 
     public function test_el_centro_de_mando_suena_con_el_audio_cargado_en_ajustes(): void
