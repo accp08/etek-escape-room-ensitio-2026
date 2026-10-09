@@ -483,11 +483,16 @@ class Juego
     /* Ranking */
     /* ------------------------------------------------------------------ */
 
-    /** Más aciertos primero; a igualdad de aciertos, menos tiempo. */
-    public function ranking(int $limite = 50): Collection
+    /**
+     * Más aciertos primero; a igualdad de aciertos, menos tiempo. Con
+     * $dominio, solo los participantes cuyo correo es de ese dominio.
+     */
+    public function ranking(int $limite = 50, ?string $dominio = null): Collection
     {
         return Partida::with('participante')
             ->where('aciertos', '>', 0)
+            ->when($dominio, fn ($consulta) => $consulta->whereHas('participante', fn ($p) => $p
+                ->where('correo', 'like', '%@'.addcslashes($dominio, '%_\\'))))
             ->orderByDesc('aciertos')
             ->orderBy('segundos_jugados')
             ->orderBy('id')   // desempate estable: el que llegó primero

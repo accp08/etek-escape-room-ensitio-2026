@@ -9,6 +9,7 @@ use App\Http\Controllers\Dashboard\SesionController;
 use App\Http\Controllers\Juego\AccesoController;
 use App\Http\Controllers\Juego\ConsolaController;
 use App\Http\Controllers\Juego\PartidaController;
+use App\Http\Controllers\Juego\TopController;
 use App\Http\Middleware\ParticipanteAutenticado;
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,12 @@ Route::get('/consola', [ConsolaController::class, 'index'])->name('consola');
 Route::get('/consola/ranking', [ConsolaController::class, 'ranking'])->name('consola.ranking');
 Route::post('/consola/verificar', [ConsolaController::class, 'verificar'])
     ->middleware('throttle:20,1')->name('consola.verificar');
+
+/*
+ * Top 3 por dominio permitido: pantalla pública con un podio, para proyectar.
+ */
+Route::get('/top', [TopController::class, 'index'])->name('top');
+Route::get('/top/podios', [TopController::class, 'podiosHtml'])->name('top.podios');
 
 Route::middleware(ParticipanteAutenticado::class)->group(function () {
 

@@ -8,6 +8,7 @@
 import { iniciarEditores } from './editor';
 import { esperarConsola, iniciarConsola } from './consola';
 import { iniciarAudio, iniciarEscaner, iniciarProyeccion, pintarQrs } from './qr';
+import { iniciarTop } from './top';
 
 const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -320,6 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Código final: consola proyectada en la sala, y el celular que la espera.
     iniciarConsola();
     esperarConsola();
+
+    // Top 3 por dominio, proyectado en la sala.
+    iniciarTop();
 
     // Dashboard: vista previa del logo antes de guardarlo.
     const campoLogo = document.querySelector('#logo');
