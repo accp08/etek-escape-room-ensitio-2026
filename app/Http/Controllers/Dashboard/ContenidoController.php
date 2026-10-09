@@ -197,30 +197,41 @@ class ContenidoController extends Controller
         return back()->with('exito', 'Parámetros actualizados.');
     }
 
-    /* ---------------- Audio de la consola ---------------- */
+    /* ---------------- Audio de las pantallas ---------------- */
 
-    /** MP3 que suena en bucle en la consola de recuperación (/consola). */
-    public function guardarAudioConsola(Request $peticion): RedirectResponse
+    /** Pantallas con audio propio, cargado en Parámetros: clave del ajuste => nombre. */
+    public const PANTALLAS_CON_AUDIO = [
+        'consola' => 'consola de recuperación',
+        'hub' => 'centro de mando',
+    ];
+
+    /** MP3 que suena en bucle en la pantalla (consola o centro de mando). */
+    public function guardarAudio(Request $peticion, string $pantalla): RedirectResponse
     {
-        $peticion->validate(['audio_consola' => [...Audio::reglas(), 'required']], Audio::mensajes('audio_consola'));
+        abort_unless(isset(self::PANTALLAS_CON_AUDIO[$pantalla]), 404);
 
-        $ruta = Audio::guardar($peticion->file('audio_consola'), 'consola', ajuste('audio_consola'));
-        Ajuste::updateOrCreate(['clave' => 'audio_consola'], ['valor' => $ruta]);
+        $campo = "audio_{$pantalla}";
+        $peticion->validate([$campo => [...Audio::reglas(), 'required']], Audio::mensajes($campo));
+
+        $ruta = Audio::guardar($peticion->file($campo), $pantalla, ajuste($campo));
+        Ajuste::updateOrCreate(['clave' => $campo], ['valor' => $ruta]);
 
         Contenido::olvidar();
-        Bitacora::dashboard('ajustes.audio_consola', 'Se cargó el audio de la consola de recuperación', ['audio' => $ruta]);
+        Bitacora::dashboard('ajustes.audio', 'Se cargó el audio del '.self::PANTALLAS_CON_AUDIO[$pantalla], ['audio' => $ruta]);
 
-        return back()->with('exito', 'Audio de la consola actualizado.');
+        return back()->with('exito', 'Audio del '.self::PANTALLAS_CON_AUDIO[$pantalla].' actualizado.');
     }
 
-    public function quitarAudioConsola(): RedirectResponse
+    public function quitarAudio(string $pantalla): RedirectResponse
     {
-        Audio::borrar(ajuste('audio_consola'));
-        Ajuste::where('clave', 'audio_consola')->delete();
+        abort_unless(isset(self::PANTALLAS_CON_AUDIO[$pantalla]), 404);
+
+        Audio::borrar(ajuste("audio_{$pantalla}"));
+        Ajuste::where('clave', "audio_{$pantalla}")->delete();
 
         Contenido::olvidar();
-        Bitacora::dashboard('ajustes.audio_consola', 'Se quitó el audio de la consola de recuperación');
+        Bitacora::dashboard('ajustes.audio', 'Se quitó el audio del '.self::PANTALLAS_CON_AUDIO[$pantalla]);
 
-        return back()->with('exito', 'Se quitó el audio de la consola.');
+        return back()->with('exito', 'Se quitó el audio del '.self::PANTALLAS_CON_AUDIO[$pantalla].'.');
     }
 }

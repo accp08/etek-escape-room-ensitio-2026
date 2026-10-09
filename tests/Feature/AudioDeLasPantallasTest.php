@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\ParticipanteAutenticado;
 use App\Models\Mision;
+use App\Models\Participante;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -105,7 +107,7 @@ class AudioDeLasPantallasTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        $this->post(route('dashboard.ajustes.audio-consola'), ['audio_consola' => $this->mp3()])
+        $this->post(route('dashboard.ajustes.audio', 'consola'), ['audio_consola' => $this->mp3()])
             ->assertSessionHasNoErrors();
 
         $ruta = ajuste('audio_consola');
@@ -115,7 +117,7 @@ class AudioDeLasPantallasTest extends TestCase
             ->assertSee('data-proy-audio', false)
             ->assertSee(route('archivos.publicos', ['ruta' => $ruta]), false);
 
-        $this->delete(route('dashboard.ajustes.audio-consola.quitar'));
+        $this->delete(route('dashboard.ajustes.audio.quitar', 'consola'));
 
         Storage::disk('public')->assertMissing($ruta);
         $this->get(route('consola'))->assertDontSee('data-proy-audio', false);
@@ -123,9 +125,37 @@ class AudioDeLasPantallasTest extends TestCase
 
     public function test_solo_el_dashboard_puede_cargar_el_audio_de_la_consola(): void
     {
-        $this->post(route('dashboard.ajustes.audio-consola'), ['audio_consola' => $this->mp3()])
+        $this->post(route('dashboard.ajustes.audio', 'consola'), ['audio_consola' => $this->mp3()])
             ->assertRedirect(route('dashboard.login'));
 
         $this->assertNull(ajuste('audio_consola'));
+    }
+
+    public function test_el_centro_de_mando_suena_con_el_audio_cargado_en_ajustes(): void
+    {
+        $ana = Participante::create([
+            'nombre' => 'Ana', 'documento' => '1020304050', 'correo' => 'ana@empresa.com', 'codigo_acceso' => 'ABC234',
+        ]);
+        $comoAna = fn () => $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $ana->id]);
+
+        $comoAna()->get(route('hub'))->assertOk()->assertDontSee('data-proy-audio', false);
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('dashboard.ajustes.audio', 'hub'), ['audio_hub' => $this->mp3()])
+            ->assertSessionHasNoErrors();
+
+        $ruta = ajuste('audio_hub');
+        Storage::disk('public')->assertExists($ruta);
+
+        $comoAna()->get(route('hub'))
+            ->assertSee('data-proy-audio', false)
+            ->assertSee(route('archivos.publicos', ['ruta' => $ruta]), false);
+    }
+
+    public function test_no_acepta_pantallas_desconocidas(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post(route('dashboard.ajustes.audio', 'ranking'), ['audio_ranking' => $this->mp3()])
+            ->assertNotFound();
     }
 }

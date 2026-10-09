@@ -217,8 +217,9 @@ export async function pintarQrs() {
  * interactúa con la página: si se bloquea, arranca con el primer clic o
  * tecla (por ejemplo, al poner la pantalla completa). Silenciarlo se recuerda
  * en este navegador para todas las pantallas. Devuelve el alternador, o null.
+ * Lo usan las pantallas proyectadas y el centro de mando del celular.
  */
-function iniciarAudio(cuerpo) {
+export function iniciarAudio(cuerpo = document.body) {
     const audio = cuerpo.querySelector('[data-proy-audio]');
     if (!audio) return null;
 

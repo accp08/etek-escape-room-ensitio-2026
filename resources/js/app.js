@@ -7,7 +7,7 @@
 
 import { iniciarEditores } from './editor';
 import { esperarConsola, iniciarConsola } from './consola';
-import { iniciarEscaner, iniciarProyeccion, pintarQrs } from './qr';
+import { iniciarAudio, iniciarEscaner, iniciarProyeccion, pintarQrs } from './qr';
 
 const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -313,6 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
     iniciarEscaner();
     pintarQrs();
     iniciarProyeccion();
+
+    // Centro de mando: audio de fondo (las pantallas proyectadas lo inician arriba).
+    if (!document.querySelector('[data-proyeccion]')) iniciarAudio();
 
     // Código final: consola proyectada en la sala, y el celular que la espera.
     iniciarConsola();

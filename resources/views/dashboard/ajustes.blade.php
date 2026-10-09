@@ -88,35 +88,40 @@
     <button type="submit" class="btn btn-primary mt-6 md:col-span-2">Guardar parámetros</button>
 </form>
 
-{{-- Audio de la consola: formulario aparte porque sube un archivo. --}}
-<section class="panel mt-4 p-5">
-    <p class="eyebrow">Consola de recuperación</p>
-    <h2 class="mt-1 text-[18px] font-black text-ink">Audio de la consola</h2>
-    <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
-        MP3 de hasta {{ intdiv(\App\Support\Audio::MAX_KB, 1024) }} MB que suena en bucle en la pantalla
-        <a href="{{ route('consola') }}" target="_blank" class="text-cyan hover:underline">/consola</a>.
-    </p>
+{{-- Audio de las pantallas: formularios aparte porque suben un archivo. --}}
+<div class="mt-4 grid gap-4 md:grid-cols-2">
+    @foreach ([
+        'consola' => ['rotulo' => 'Consola de recuperación', 'ruta' => route('consola'), 'texto' => 'la pantalla proyectada'],
+        'hub' => ['rotulo' => 'Centro de mando', 'ruta' => route('hub'), 'texto' => 'el celular del participante, en'],
+    ] as $pantalla => $info)
+        <section class="panel p-5">
+            <p class="eyebrow">{{ $info['rotulo'] }}</p>
+            <h2 class="mt-1 text-[18px] font-black text-ink">Audio del {{ \Illuminate\Support\Str::lower($info['rotulo']) }}</h2>
+            <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
+                MP3 de hasta {{ intdiv(\App\Support\Audio::MAX_KB, 1024) }} MB que suena en bucle en {{ $info['texto'] }}
+                <a href="{{ $info['ruta'] }}" target="_blank" class="text-cyan hover:underline">{{ parse_url($info['ruta'], PHP_URL_PATH) }}</a>.
+            </p>
 
-    @if ($audioConsola = \App\Support\Audio::url(ajuste('audio_consola')))
-        <div class="mt-4 flex flex-wrap items-center gap-3">
-            <audio controls preload="none" src="{{ $audioConsola }}" class="h-9 max-w-full"></audio>
-            <form method="POST" action="{{ route('dashboard.ajustes.audio-consola.quitar') }}"
-                  onsubmit="return confirm('¿Quitar el audio de la consola?')">
-                @csrf @method('DELETE')
-                <button type="submit" class="btn btn-danger !w-auto">Quitar audio</button>
+            @if ($audioActual = \App\Support\Audio::url(ajuste("audio_{$pantalla}")))
+                <div class="mt-4 flex flex-wrap items-center gap-3">
+                    <audio controls preload="none" src="{{ $audioActual }}" class="h-9 max-w-full"></audio>
+                    <form method="POST" action="{{ route('dashboard.ajustes.audio.quitar', $pantalla) }}"
+                          onsubmit="return confirm('¿Quitar este audio?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-danger !w-auto">Quitar audio</button>
+                    </form>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('dashboard.ajustes.audio', $pantalla) }}" enctype="multipart/form-data"
+                  class="mt-4 flex flex-wrap items-start gap-3">
+                @csrf
+                <input type="file" name="audio_{{ $pantalla }}" accept=".mp3,audio/mpeg" class="field min-w-0 flex-1" required>
+                <button type="submit" class="btn btn-primary !w-auto">{{ $audioActual ? 'Reemplazar audio' : 'Subir audio' }}</button>
             </form>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('dashboard.ajustes.audio-consola') }}" enctype="multipart/form-data"
-          class="mt-4 flex flex-wrap items-start gap-3">
-        @csrf
-        <div class="min-w-0 flex-1">
-            <input type="file" name="audio_consola" accept=".mp3,audio/mpeg" class="field" required>
-        </div>
-        <button type="submit" class="btn btn-primary !w-auto">{{ $audioConsola ? 'Reemplazar audio' : 'Subir audio' }}</button>
-    </form>
-</section>
+        </section>
+    @endforeach
+</div>
 
 <script>
     document.getElementById('metodo_acceso')?.addEventListener('change', (evento) => {

@@ -162,8 +162,8 @@ Route::prefix('dashboard')->group(function () {
         // Parámetros del juego
         Route::get('/ajustes', [ContenidoController::class, 'ajustes'])->name('dashboard.ajustes');
         Route::put('/ajustes', [ContenidoController::class, 'guardarAjustes'])->name('dashboard.ajustes.guardar');
-        Route::post('/ajustes/audio-consola', [ContenidoController::class, 'guardarAudioConsola'])->name('dashboard.ajustes.audio-consola');
-        Route::delete('/ajustes/audio-consola', [ContenidoController::class, 'quitarAudioConsola'])->name('dashboard.ajustes.audio-consola.quitar');
+        Route::post('/ajustes/audio/{pantalla}', [ContenidoController::class, 'guardarAudio'])->name('dashboard.ajustes.audio');
+        Route::delete('/ajustes/audio/{pantalla}', [ContenidoController::class, 'quitarAudio'])->name('dashboard.ajustes.audio.quitar');
 
         // Participantes
         Route::get('/participantes', [ParticipanteController::class, 'index'])->name('dashboard.participantes');

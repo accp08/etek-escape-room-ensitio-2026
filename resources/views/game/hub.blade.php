@@ -17,6 +17,18 @@
             </h1>
         </div>
         <div class="flex shrink-0 items-center gap-2">
+            @if ($audio)
+                <audio src="{{ $audio }}" loop preload="auto" data-proy-audio></audio>
+                <button type="button" data-proy-sonido
+                        class="grid h-10 w-10 place-items-center rounded-xl border border-[rgba(46,91,140,.5)] text-muted hover:text-cyan"
+                        aria-label="Sonido" title="Sonido">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+                        <path data-sonido-on d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>
+                        <path data-sonido-off d="m16 9 6 6M22 9l-6 6"/>
+                    </svg>
+                </button>
+            @endif
             <button type="button" data-abrir-hoja="instrucciones-juego"
                     class="grid h-10 w-10 place-items-center rounded-xl border border-[rgba(46,91,140,.5)] text-muted hover:text-cyan"
                     aria-label="{{ txt('hub.instrucciones', 'Instrucciones del juego') }}" title="{{ txt('hub.instrucciones', 'Instrucciones del juego') }}">

@@ -7,6 +7,7 @@ use App\Models\Mision;
 use App\Models\PartidaMision;
 use App\Models\PasoBriefing;
 use App\Services\Juego;
+use App\Support\Audio;
 use App\Support\Bitacora;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -63,6 +64,7 @@ class PartidaController extends Controller
             'jugables' => $tablero->filter(fn ($f) => $f['mision']->jugable),
             'codigo' => $this->juego->codigoObtenido($partida),
             'pasos' => PasoBriefing::orderBy('orden')->get(),   // ventana de instrucciones
+            'audio' => Audio::url(ajuste('audio_hub')),   // se carga en Parámetros
         ]);
     }
 
