@@ -86,13 +86,17 @@ class JuegoTerminadoTest extends TestCase
         $this->assertSame(1, substr_count($pagina, 'href="'.$boton.'"'));
     }
 
-    public function test_la_victoria_muestra_el_video_de_cierre(): void
+    public function test_la_victoria_tiene_el_boton_del_video_de_cierre(): void
     {
         Ajuste::updateOrCreate(['clave' => 'video_final'], ['valor' => 'video/final.mp4']);
         Cache::flush();
         $this->terminar();
         $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $this->ana->id]);
 
-        $this->get(route('victoria'))->assertOk()->assertSee('src="'.route('video.final').'"', false);
+        // Botón que abre el video en una hoja; el archivo no se pide al cargar la página.
+        $this->get(route('victoria'))->assertOk()
+            ->assertSee('data-abrir-video', false)
+            ->assertSee('data-fuente="'.route('video.final').'"', false)
+            ->assertDontSee('src="'.route('video.final').'"', false);
     }
 }

@@ -182,9 +182,30 @@
         <audio src="{{ $audio }}" loop preload="auto" data-proy-audio></audio>
     @endif
 
+    @if (ajuste('video_final'))
+        {{-- Video de cierre a pantalla completa. El archivo (~21 MB) se pide al abrirlo. --}}
+        <div class="cons-video" data-cons-video hidden>
+            <video class="cons-video-reproductor" data-video controls playsinline preload="none"
+                   data-fuente="{{ route('consola.video') }}">
+                Tu navegador no puede reproducir este video.
+            </video>
+            <button type="button" class="proy-boton cons-video-cerrar" data-cerrar-video title="Cerrar (Esc)">
+                @include('partials.icono', ['n' => 'x', 'c' => 'w-4 h-4'])
+                Cerrar video
+            </button>
+        </div>
+    @endif
+
     {{-- Controles: se ocultan solos cuando el mouse no se mueve --}}
     <nav class="proy-controles" data-proy-controles>
         @includeWhen($audio, 'partials.boton-sonido')
+
+        @if (ajuste('video_final'))
+            <button type="button" class="proy-boton" data-abrir-video title="Ver el video de la experiencia">
+                @include('partials.icono', ['n' => 'play', 'c' => 'w-4 h-4'])
+                Ver video
+            </button>
+        @endif
 
         <button type="button" class="proy-boton proy-boton-principal" data-proy-pantalla-completa title="Pantalla completa">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

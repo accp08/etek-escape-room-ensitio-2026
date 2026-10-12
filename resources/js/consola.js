@@ -189,7 +189,7 @@ export function iniciarConsola() {
     };
 
     const enfocar = () => {
-        if (!ocupado) entrada.focus({ preventScroll: true });
+        if (!ocupado && !videoAbierto()) entrada.focus({ preventScroll: true });
     };
 
     const pintarCasillas = () => {
@@ -333,6 +333,7 @@ export function iniciarConsola() {
     // Durante el éxito, cualquier tecla deja la consola lista para el siguiente.
     document.addEventListener('keydown', (e) => {
         activarAudio();
+        if (videoAbierto()) return;
         if (terminal.dataset.estado === 'exito' && (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ')) {
             e.preventDefault();
             reiniciar();
@@ -359,8 +360,54 @@ export function iniciarConsola() {
         }
     }, REFRESCO_RANKING);
 
+    iniciarVideo(enfocar);
     pintarCasillas();
     enfocar();
+}
+
+/* ------------------------------------------------------------------ */
+/* Consola: video de cierre                                            */
+/* ------------------------------------------------------------------ */
+
+const videoAbierto = () => !(document.querySelector('[data-cons-video]')?.hidden ?? true);
+
+/**
+ * Botón «Ver video» de los controles: abre el video de cierre a pantalla
+ * completa y pausa el audio de fondo mientras suena. Esc o «Cerrar» lo cierran.
+ */
+function iniciarVideo(enfocar) {
+    const capa = document.querySelector('[data-cons-video]');
+    const boton = document.querySelector('[data-abrir-video]');
+    if (!capa || !boton) return;
+
+    const video = capa.querySelector('[data-video]');
+    const fondo = document.querySelector('[data-proy-audio]');
+    let fondoSonaba = false;
+
+    const abrir = () => {
+        if (!video.src) video.src = video.dataset.fuente;
+        fondoSonaba = fondo ? !fondo.paused : false;
+        fondo?.pause();
+        capa.hidden = false;
+        video.play().catch(() => {}); // si se bloquea el autoplay, queda el control
+    };
+
+    const cerrar = () => {
+        video.pause();
+        capa.hidden = true;
+        if (fondoSonaba) fondo.play().catch(() => {});
+        enfocar();
+    };
+
+    boton.addEventListener('click', (e) => {
+        e.stopPropagation(); // el clic no debe devolver el foco al campo
+        abrir();
+    });
+    capa.querySelector('[data-cerrar-video]').addEventListener('click', cerrar);
+    video.addEventListener('ended', cerrar);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && videoAbierto()) cerrar();
+    });
 }
 
 /* ------------------------------------------------------------------ */

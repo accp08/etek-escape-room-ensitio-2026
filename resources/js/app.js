@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Certificado: video de cierre en una hoja del dispositivo.
+    // Certificado y victoria: video de cierre en una hoja del dispositivo.
     const hojaVideo = document.querySelector('[data-hoja-video]');
     if (hojaVideo) {
         const video = hojaVideo.querySelector('[data-video]');

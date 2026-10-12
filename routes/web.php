@@ -36,7 +36,29 @@ Route::post('/salir', [AccesoController::class, 'salir'])->name('salir');
  * Sin CSRF (bootstrap/app.php): no hay sesión que proteger y la pantalla
  * queda abierta horas.
  */
+/*
+ * El video de cierre se sirve por aquí y no como archivo estático porque el
+ * servidor embebido de PHP (`artisan serve`) no responde peticiones por rangos,
+ * y sin eso Safari en iOS no reproduce video ni se puede adelantar.
+ * BinaryFileResponse sí las maneja. Lo usan el celular y la consola.
+ */
+$videoFinal = function () {
+    $ruta = ajuste('video_final', config('escape_room.video_final'));
+
+    abort_if(! $ruta, 404);
+
+    $archivo = public_path($ruta);
+
+    abort_unless(is_file($archivo), 404);
+
+    return response()->file($archivo, [
+        'Content-Type' => 'video/mp4',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+};
+
 Route::get('/consola', [ConsolaController::class, 'index'])->name('consola');
+Route::get('/consola/video', $videoFinal)->name('consola.video');
 Route::get('/consola/ranking', [ConsolaController::class, 'ranking'])->name('consola.ranking');
 Route::post('/consola/verificar', [ConsolaController::class, 'verificar'])
     ->middleware('throttle:20,1')->name('consola.verificar');
@@ -47,7 +69,7 @@ Route::post('/consola/verificar', [ConsolaController::class, 'verificar'])
 Route::get('/top', [TopController::class, 'index'])->name('top');
 Route::get('/top/podios', [TopController::class, 'podiosHtml'])->name('top.podios');
 
-Route::middleware(ParticipanteAutenticado::class)->group(function () {
+Route::middleware(ParticipanteAutenticado::class)->group(function () use ($videoFinal) {
 
     Route::get('/instrucciones', [PartidaController::class, 'instrucciones'])->name('instrucciones');
     Route::get('/presencia', [PartidaController::class, 'presencia'])->name('presencia');
@@ -70,26 +92,7 @@ Route::middleware(ParticipanteAutenticado::class)->group(function () {
     Route::post('/certificado/descargado', [PartidaController::class, 'certificadoDescargado'])
         ->name('certificado.descargado');
 
-    /*
-     * El video de cierre se sirve por aquí y no como archivo estático porque el
-     * servidor embebido de PHP (`artisan serve`) no responde peticiones por rangos,
-     * y sin eso Safari en iOS no reproduce video ni se puede adelantar.
-     * BinaryFileResponse sí las maneja.
-     */
-    Route::get('/video-final', function () {
-        $ruta = ajuste('video_final', config('escape_room.video_final'));
-
-        abort_if(! $ruta, 404);
-
-        $archivo = public_path($ruta);
-
-        abort_unless(is_file($archivo), 404);
-
-        return response()->file($archivo, [
-            'Content-Type' => 'video/mp4',
-            'Cache-Control' => 'public, max-age=86400',
-        ]);
-    })->name('video.final');
+    Route::get('/video-final', $videoFinal)->name('video.final');
 });
 
 /*

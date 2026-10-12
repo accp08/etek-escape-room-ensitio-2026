@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\ParticipanteAutenticado;
+use App\Models\Ajuste;
 use App\Models\Mision;
 use App\Models\Participante;
 use App\Models\Partida;
 use App\Services\Juego;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -165,5 +167,22 @@ class ConsolaRecuperacionTest extends TestCase
         $this->postJson('/consola/verificar', ['codigo' => $this->juego->codigoCompleto($ana)])
             ->assertJson(['puesto' => 1, 'total' => 1]);
         $this->getJson('/consola/ranking')->assertJsonPath('ranking.0.nombre', 'Ana');
+    }
+
+    public function test_la_consola_tiene_el_boton_del_video_y_lo_sirve_sin_sesion(): void
+    {
+        $ruta = 'prueba-consola.mp4';
+        file_put_contents(public_path($ruta), 'mp4');
+        Ajuste::updateOrCreate(['clave' => 'video_final'], ['valor' => $ruta]);
+        Cache::flush();
+
+        try {
+            $this->get('/consola')->assertOk()
+                ->assertSee('data-abrir-video', false)
+                ->assertSee('data-fuente="'.route('consola.video').'"', false);
+            $this->get(route('consola.video'))->assertOk()->assertHeader('Content-Type', 'video/mp4');
+        } finally {
+            @unlink(public_path($ruta));
+        }
     }
 }

@@ -20,17 +20,6 @@
             {{ txt('victoria.texto', '') }}
         </p>
 
-        @if (ajuste('video_final'))
-            {{-- Video de cierre en línea. Solo baja los metadatos hasta que se
-                 reproduce: el archivo pesa ~21 MB. --}}
-            <div class="anim-in mt-7 overflow-hidden rounded-2xl border border-[rgba(0,229,255,.35)] bg-black shadow-[0_0_46px_rgba(0,229,255,.16)]" style="--i:3">
-                <video class="block h-auto w-full" controls playsinline preload="metadata"
-                       src="{{ route('video.final') }}">
-                    Tu navegador no puede reproducir este video.
-                </video>
-            </div>
-        @endif
-
         <div class="panel scan anim-in mt-7 p-5" style="--i:3">
             <p class="eyebrow">Código de recuperación</p>
             <p class="code-chip mt-3 inline-block text-2xl">{{ $codigo }}</p>
@@ -74,6 +63,13 @@
             {{ txt('victoria.certificado', 'Generar mi certificado') }}
         </a>
 
+        @if (ajuste('video_final'))
+            <button type="button" data-abrir-video class="btn btn-ghost">
+                @include('partials.icono', ['n' => 'play', 'c' => 'w-4 h-4'])
+                {{ txt('certificado.video', 'Ver el video de la experiencia') }}
+            </button>
+        @endif
+
         <a href="{{ route('ranking') }}" class="btn btn-ghost">
             @include('partials.icono', ['n' => 'trophy', 'c' => 'w-4 h-4'])
             Ver ranking general
@@ -85,4 +81,10 @@
         </form>
     </div>
 </div>
+@endsection
+
+@section('hojas')
+    @if (ajuste('video_final'))
+        @include('partials.hoja-video')
+    @endif
 @endsection
