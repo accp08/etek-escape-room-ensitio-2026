@@ -18,6 +18,15 @@ class ParticipanteAutenticado
 {
     public const CLAVE_SESION = 'participante_id';
 
+    /**
+     * Pantallas que quedan abiertas cuando el código final ya se validó en la
+     * consola: el juego terminó y solo queda el certificado, el video y el ranking.
+     */
+    public const RUTAS_TERMINADO = [
+        'victoria', 'certificado', 'certificado.descargado', 'video.final', 'ranking',
+        'presencia', 'final.estado',
+    ];
+
     public function handle(Request $peticion, Closure $siguiente): Response
     {
         $id = $peticion->session()->get(self::CLAVE_SESION);
@@ -37,7 +46,18 @@ class ParticipanteAutenticado
 
         $this->registrarPresencia($peticion, $participante);
 
+        if (! in_array($peticion->route()?->getName(), self::RUTAS_TERMINADO, true)
+            && self::terminoElJuego($participante)) {
+            return redirect()->route('certificado');
+        }
+
         return $siguiente($peticion);
+    }
+
+    /** Ya digitó su código de recuperación válido en la consola. */
+    public static function terminoElJuego(Participante $participante): bool
+    {
+        return (bool) $participante->partidaActual()?->codigoIngresado();
     }
 
     /**

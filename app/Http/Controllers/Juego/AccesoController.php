@@ -143,6 +143,13 @@ class AccesoController extends Controller
             'partida_id' => $partida->id,
         ]);
 
+        // Si ya terminó, solo le queda el certificado, el video y el ranking.
+        if ($partida->codigoIngresado()) {
+            $peticion->session()->forget('url.intended');
+
+            return redirect()->route('certificado');
+        }
+
         // Si llegó escaneando el QR de una estación, vuelve a esa misión. Solo se
         // honran URLs de misión: la misma clave de sesión la usa el dashboard.
         $pedida = $peticion->session()->pull('url.intended');
@@ -173,6 +180,13 @@ class AccesoController extends Controller
         $partida = $juego->partidaDe($participante);
 
         Bitacora::juego('acceso', "{$participante->nombre} entró al juego", ['partida_id' => $partida->id]);
+
+        if ($partida->codigoIngresado()) {
+            $peticion->session()->forget('url.intended');
+
+            return redirect()->route('certificado');
+        }
+
         $pedida = $peticion->session()->pull('url.intended');
 
         if ($pedida && str_contains((string) parse_url($pedida, PHP_URL_PATH), '/mision/')) {

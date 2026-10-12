@@ -138,6 +138,11 @@
             @include('partials.icono', ['n' => 'trophy', 'c' => 'w-4 h-4'])
             Ver ranking general
         </a>
+
+        <form method="POST" action="{{ route('salir') }}">
+            @csrf
+            <button type="submit" class="block w-full text-center text-[11px] font-semibold text-muted hover:text-cyan">Salir</button>
+        </form>
     </div>
 </div>
 @endsection

@@ -109,7 +109,7 @@ class ConsolaRecuperacionTest extends TestCase
 
         $this->assertTrue($partida->refresh()->codigoIngresado());
         $this->como($ana)->getJson('/codigo-final/estado')->assertExactJson(['ingresado' => true]);
-        $this->como($ana)->get('/codigo-final')->assertRedirect(route('victoria'));
+        $this->como($ana)->get('/codigo-final')->assertRedirect(route('certificado'));
         $this->como($ana)->get('/amenaza-contenida')->assertOk();
 
         // Volver a digitarlo no lo registra dos veces.

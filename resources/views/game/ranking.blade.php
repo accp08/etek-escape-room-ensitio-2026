@@ -10,7 +10,7 @@
 <div class="safe-top px-5 pb-8 pt-6">
 
     <div class="flex items-center justify-between">
-        <a href="{{ route('hub') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-muted hover:text-cyan">
+        <a href="{{ route($partida->codigoIngresado() ? 'certificado' : 'hub') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-muted hover:text-cyan">
             @include('partials.icono', ['n' => 'back', 'c' => 'w-4 h-4'])
             Volver
         </a>
