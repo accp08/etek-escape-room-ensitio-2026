@@ -20,6 +20,17 @@
             {{ txt('victoria.texto', '') }}
         </p>
 
+        @if (ajuste('video_final'))
+            {{-- Video de cierre en línea. Solo baja los metadatos hasta que se
+                 reproduce: el archivo pesa ~21 MB. --}}
+            <div class="anim-in mt-7 overflow-hidden rounded-2xl border border-[rgba(0,229,255,.35)] bg-black shadow-[0_0_46px_rgba(0,229,255,.16)]" style="--i:3">
+                <video class="block h-auto w-full" controls playsinline preload="metadata"
+                       src="{{ route('video.final') }}">
+                    Tu navegador no puede reproducir este video.
+                </video>
+            </div>
+        @endif
+
         <div class="panel scan anim-in mt-7 p-5" style="--i:3">
             <p class="eyebrow">Código de recuperación</p>
             <p class="code-chip mt-3 inline-block text-2xl">{{ $codigo }}</p>

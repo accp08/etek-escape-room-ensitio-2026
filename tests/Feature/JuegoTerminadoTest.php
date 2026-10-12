@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\ParticipanteAutenticado;
+use App\Models\Ajuste;
 use App\Models\Mision;
 use App\Models\Participante;
 use App\Services\Juego;
 use Database\Seeders\ContenidoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -82,5 +84,15 @@ class JuegoTerminadoTest extends TestCase
         $pagina = $this->get(route('hub'))->assertOk()->getContent();
         $this->assertLessThan(strpos($pagina, 'eyebrow anim-in mt-7'), strpos($pagina, $boton));
         $this->assertSame(1, substr_count($pagina, 'href="'.$boton.'"'));
+    }
+
+    public function test_la_victoria_muestra_el_video_de_cierre(): void
+    {
+        Ajuste::updateOrCreate(['clave' => 'video_final'], ['valor' => 'video/final.mp4']);
+        Cache::flush();
+        $this->terminar();
+        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $this->ana->id]);
+
+        $this->get(route('victoria'))->assertOk()->assertSee('src="'.route('video.final').'"', false);
     }
 }

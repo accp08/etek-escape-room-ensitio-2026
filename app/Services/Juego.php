@@ -436,14 +436,23 @@ class Juego
         return true;
     }
 
-    /** Puesto de la partida en el ranking general (null si aún no suma aciertos). */
+    /**
+     * Partidas que entran al ranking: solo las que ya validaron su código de
+     * recuperación en la consola.
+     */
+    private function enRanking()
+    {
+        return Partida::whereNotNull('codigo_final_en')->where('aciertos', '>', 0);
+    }
+
+    /** Puesto de la partida en el ranking general (null si aún no validó su código en la consola). */
     public function puestoDe(Partida $partida): ?int
     {
-        if ($partida->aciertos < 1) {
+        if (! $partida->codigoIngresado() || $partida->aciertos < 1) {
             return null;
         }
 
-        $mejores = Partida::where('aciertos', '>', 0)
+        $mejores = $this->enRanking()
             ->where(function ($consulta) use ($partida) {
                 $consulta->where('aciertos', '>', $partida->aciertos)
                     ->orWhere(fn ($c) => $c->where('aciertos', $partida->aciertos)->where('segundos_jugados', '<', $partida->segundos_jugados))
@@ -457,7 +466,7 @@ class Juego
     /** Partidas que aparecen en el ranking. */
     public function totalRanking(): int
     {
-        return Partida::where('aciertos', '>', 0)->count();
+        return $this->enRanking()->count();
     }
 
     /** Solo se puede ejecutar el código final cuando se superaron todas las misiones jugables. */
@@ -484,13 +493,14 @@ class Juego
     /* ------------------------------------------------------------------ */
 
     /**
-     * Más aciertos primero; a igualdad de aciertos, menos tiempo. Con
-     * $dominio, solo los participantes cuyo correo es de ese dominio.
+     * Más aciertos primero; a igualdad de aciertos, menos tiempo. Solo entra
+     * quien ya validó su código en la consola. Con $dominio, solo los
+     * participantes cuyo correo es de ese dominio.
      */
     public function ranking(int $limite = 50, ?string $dominio = null): Collection
     {
-        return Partida::with('participante')
-            ->where('aciertos', '>', 0)
+        return $this->enRanking()
+            ->with('participante')
             ->when($dominio, fn ($consulta) => $consulta->whereHas('participante', fn ($p) => $p
                 ->where('correo', 'like', '%@'.addcslashes($dominio, '%_\\'))))
             ->orderByDesc('aciertos')

@@ -31,6 +31,7 @@ class TopPorDominioTest extends TestCase
             'aciertos' => $aciertos,
             'aciertos_posibles' => 5,
             'segundos_jugados' => $segundos,
+            'codigo_final_en' => now(),   // solo entra al top quien validó su código
         ]);
     }
 
@@ -78,5 +79,13 @@ class TopPorDominioTest extends TestCase
 
         $this->jugador('Beto', 'beto@etek.com', 5, 100);
         $this->assertNotSame($firma, $this->get(route('top.podios'))->headers->get('X-Firma'));
+    }
+
+    public function test_sin_validar_el_codigo_en_la_consola_no_aparece(): void
+    {
+        $this->jugador('Ana', 'ana@etek.com', 5, 300);
+        Partida::latest('id')->first()->update(['codigo_final_en' => null]);
+
+        $this->get(route('top'))->assertOk()->assertDontSee('Ana');
     }
 }

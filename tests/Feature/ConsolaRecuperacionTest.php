@@ -85,9 +85,18 @@ class ConsolaRecuperacionTest extends TestCase
             ->assertDontSee($this->juego->codigoCompleto($beto));
     }
 
+    /** Juega y digita su código en la consola. */
+    private function jugarYValidar(Participante $participante, int $segundos = 30): Partida
+    {
+        $partida = $this->jugar($participante, $segundos);
+        $this->postJson('/consola/verificar', ['codigo' => $this->juego->codigoCompleto($participante)])->assertOk();
+
+        return $partida->refresh();
+    }
+
     public function test_la_consola_es_publica_y_muestra_el_top(): void
     {
-        $this->jugar($this->participante('Ana Pérez', 1));
+        $this->jugarYValidar($this->participante('Ana Pérez', 1));
 
         $this->get('/consola')->assertOk()->assertSee('Ana Pérez')->assertSee('data-casilla', false);
         $this->getJson('/consola/ranking')->assertOk()->assertJsonPath('ranking.0.nombre', 'Ana Pérez');
@@ -133,7 +142,7 @@ class ConsolaRecuperacionTest extends TestCase
     {
         // 10 jugadores más rápidos ocupan el top.
         foreach (range(1, 10) as $i) {
-            $this->jugar($this->participante("Rápido {$i}", 100 + $i), segundos: 10 + $i);
+            $this->jugarYValidar($this->participante("Rápido {$i}", 100 + $i), segundos: 10 + $i);
         }
 
         $lento = $this->participante('Lento', 999);
@@ -143,5 +152,18 @@ class ConsolaRecuperacionTest extends TestCase
             ->assertOk()
             ->assertJson(['puesto' => 11, 'total' => 11, 'en_top' => false])
             ->assertJsonCount(10, 'ranking');
+    }
+
+    public function test_no_aparece_en_el_top_hasta_validar_su_codigo(): void
+    {
+        $ana = $this->participante('Ana', 1);
+        $partida = $this->jugar($ana);
+
+        $this->getJson('/consola/ranking')->assertExactJson(['ranking' => []]);
+        $this->assertNull($this->juego->puestoDe($partida));
+
+        $this->postJson('/consola/verificar', ['codigo' => $this->juego->codigoCompleto($ana)])
+            ->assertJson(['puesto' => 1, 'total' => 1]);
+        $this->getJson('/consola/ranking')->assertJsonPath('ranking.0.nombre', 'Ana');
     }
 }
