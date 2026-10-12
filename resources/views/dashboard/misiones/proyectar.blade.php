@@ -41,7 +41,7 @@
 
         @if ($numero)
             <div class="proy-estacion">
-                <span>Estación</span>
+                <span>{{ txt('proyeccion.estacion', 'Estación') }}</span>
                 <strong>{{ str_pad($numero, 2, '0', STR_PAD_LEFT) }}</strong>
                 <span class="proy-estacion-total">/ {{ str_pad($total, 2, '0', STR_PAD_LEFT) }}</span>
             </div>
@@ -70,8 +70,8 @@
                     @include('partials.icono', ['n' => 'camera', 'c' => 'w-full h-full'])
                 </span>
                 <div>
-                    <p class="proy-llamado-titulo">Escanea para activar la misión</p>
-                    <p class="proy-llamado-texto">Con la app del juego o con la cámara de tu celular</p>
+                    <p class="proy-llamado-titulo">{{ txt('proyeccion.llamado_titulo', 'Escanea para activar la misión') }}</p>
+                    <p class="proy-llamado-texto">{{ txt('proyeccion.llamado_texto', 'Con la app del juego o con la cámara de tu celular') }}</p>
                 </div>
             </div>
         </section>
@@ -96,7 +96,7 @@
 
             @if (trim(strip_tags($mision->instruccion ?? '')) !== '')
                 <div class="proy-instruccion">
-                    <p class="proy-rotulo">Instrucciones del reto</p>
+                    <p class="proy-rotulo">{{ txt('proyeccion.instrucciones', 'Instrucciones de la misión') }}</p>
                     <div class="proy-instruccion-texto">{!! $mision->instruccion !!}</div>
                 </div>
             @endif
@@ -105,17 +105,17 @@
                 <li class="proy-paso" style="--i:0">
                     <span class="proy-paso-num">1</span>
                     <span class="proy-paso-icono">@include('partials.icono', ['n' => 'camera', 'c' => 'w-full h-full'])</span>
-                    <span class="proy-paso-texto"><strong>Escanea</strong> el código QR</span>
+                    <span class="proy-paso-texto"><strong>{{ txt('proyeccion.paso1_accion', 'Escanea') }}</strong> {{ txt('proyeccion.paso1_texto', 'el código QR') }}</span>
                 </li>
                 <li class="proy-paso" style="--i:1">
                     <span class="proy-paso-num">2</span>
                     <span class="proy-paso-icono">@include('partials.icono', ['n' => 'search', 'c' => 'w-full h-full'])</span>
-                    <span class="proy-paso-texto"><strong>Resuelve</strong> el reto de la estación</span>
+                    <span class="proy-paso-texto"><strong>{{ txt('proyeccion.paso2_accion', 'Resuelve') }}</strong> {{ txt('proyeccion.paso2_texto', 'la misión de la estación') }}</span>
                 </li>
                 <li class="proy-paso" style="--i:2">
                     <span class="proy-paso-num">3</span>
                     <span class="proy-paso-icono">@include('partials.icono', ['n' => 'lock', 'c' => 'w-full h-full'])</span>
-                    <span class="proy-paso-texto"><strong>Ingresa</strong> el código en tu celular</span>
+                    <span class="proy-paso-texto"><strong>{{ txt('proyeccion.paso3_accion', 'Ingresa') }}</strong> {{ txt('proyeccion.paso3_texto', 'el número identificador de la ficha en tu celular') }}</span>
                 </li>
             </ol>
 
@@ -124,21 +124,21 @@
                     @include('partials.icono', ['n' => 'clock', 'c' => 'proy-dato-icono'])
                     <div>
                         <p class="proy-dato-valor">{{ sprintf('%02d:%02d', intdiv($mision->duracion, 60), $mision->duracion % 60) }}</p>
-                        <p class="proy-dato-etiqueta">Tiempo · arranca al escanear</p>
+                        <p class="proy-dato-etiqueta">{{ txt('proyeccion.dato_tiempo', 'Tiempo · inicia al escanear') }}</p>
                     </div>
                 </div>
                 <div class="proy-dato">
                     @include('partials.icono', ['n' => 'shield', 'c' => 'proy-dato-icono'])
                     <div>
                         <p class="proy-dato-valor">{{ $mision->intentosLegible() }}</p>
-                        <p class="proy-dato-etiqueta">{{ $mision->intentosIlimitados() ? 'Oportunidades ilimitadas' : 'Oportunidades' }}</p>
+                        <p class="proy-dato-etiqueta">{{ $mision->intentosIlimitados() ? txt('proyeccion.dato_ilimitadas', 'Oportunidades ilimitadas') : txt('proyeccion.dato_intentos', 'Oportunidades') }}</p>
                     </div>
                 </div>
                 <div class="proy-dato">
                     @include('partials.icono', ['n' => 'key', 'c' => 'proy-dato-icono'])
                     <div>
-                        <p class="proy-dato-valor">+1</p>
-                        <p class="proy-dato-etiqueta">Fragmento del código final</p>
+                        <p class="proy-dato-valor">{{ txt('proyeccion.dato_fragmento_valor', '1') }}</p>
+                        <p class="proy-dato-etiqueta">{{ txt('proyeccion.dato_fragmento', 'Fragmento del código') }}</p>
                     </div>
                 </div>
             </div>

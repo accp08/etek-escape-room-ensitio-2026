@@ -78,6 +78,8 @@ class ContenidoController extends Controller
             ], 'ayuda' => 'Se abre al escanear el QR: el cronómetro corre y el participante escribe el código de la estación.'],
             ['titulo' => 'Resultado', 'ruta' => null, 'grupo' => 'resultado',
                 'ayuda' => 'Aparece al enviar el código: éxito, reintento, fallo o tiempo agotado.'],
+            ['titulo' => 'Pantalla de la estación (proyectada)', 'ruta' => null, 'grupo' => 'proyeccion',
+                'ayuda' => 'Se proyecta en el televisor de cada estación junto al QR (Misiones › Proyectar). Los textos son los mismos para todas las estaciones.'],
         ]],
         'cierre' => ['titulo' => 'Cierre', 'icono' => 'trophy', 'pantallas' => [
             ['titulo' => 'Consola de recuperación (proyectada)', 'ruta' => '/consola', 'grupo' => 'consola',

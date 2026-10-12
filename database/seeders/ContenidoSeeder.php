@@ -114,6 +114,7 @@ class ContenidoSeeder extends Seeder
             ...TextosNuevos::MISION,
             ...TextosNuevos::PRESENCIAL,
             ...TextosNuevos::CONSOLA,
+            ...TextosNuevos::PROYECCION,
 
             ['resultado', 'resultado.exito_titulo',     'Fragmento recuperado',         'Título al superar', false],
             ['resultado', 'resultado.exito_texto',      'Descifraste una parte del código de recuperación. Consérvala: la necesitarás al final.', 'Texto al superar', true],

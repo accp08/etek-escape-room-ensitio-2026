@@ -92,6 +92,25 @@ final class TextosNuevos
         ['consola', 'consola.top_criterio',   'Más misiones superadas primero; a igualdad, menor tiempo.', 'Nota al pie del ranking', true],
     ];
 
+    /** Pantalla proyectada de cada estación (Misiones › Proyectar). */
+    public const PROYECCION = [
+        ['proyeccion', 'proyeccion.llamado_titulo', 'Escanea para activar la misión',             'Título junto al QR', false],
+        ['proyeccion', 'proyeccion.llamado_texto',  'Con la app del juego o con la cámara de tu celular', 'Texto bajo el título junto al QR', false],
+        ['proyeccion', 'proyeccion.estacion',       'Estación',                                   'Rótulo del número de estación', false],
+        ['proyeccion', 'proyeccion.instrucciones',  'Instrucciones de la misión',                 'Rótulo sobre las instrucciones', false],
+        ['proyeccion', 'proyeccion.paso1_accion',   'Escanea',                                    'Paso 1: verbo en negrita', false],
+        ['proyeccion', 'proyeccion.paso1_texto',    'el código QR',                               'Paso 1: resto del texto', false],
+        ['proyeccion', 'proyeccion.paso2_accion',   'Resuelve',                                   'Paso 2: verbo en negrita', false],
+        ['proyeccion', 'proyeccion.paso2_texto',    'la misión de la estación',                   'Paso 2: resto del texto', false],
+        ['proyeccion', 'proyeccion.paso3_accion',   'Ingresa',                                    'Paso 3: verbo en negrita', false],
+        ['proyeccion', 'proyeccion.paso3_texto',    'el número identificador de la ficha en tu celular', 'Paso 3: resto del texto', false],
+        ['proyeccion', 'proyeccion.dato_tiempo',    'Tiempo · inicia al escanear',                'Etiqueta bajo el tiempo', false],
+        ['proyeccion', 'proyeccion.dato_intentos',  'Oportunidades',                              'Etiqueta bajo el número de oportunidades', false],
+        ['proyeccion', 'proyeccion.dato_ilimitadas', 'Oportunidades ilimitadas',                  'Etiqueta si la misión no tiene límite de oportunidades', false],
+        ['proyeccion', 'proyeccion.dato_fragmento_valor', '1',                                    'Valor grande del recuadro del fragmento', false],
+        ['proyeccion', 'proyeccion.dato_fragmento', 'Fragmento del código',                       'Etiqueta del recuadro del fragmento', false],
+    ];
+
     public const CERTIFICADO = [
         ['certificado', 'certificado.texto_completo',
             'Por superar {misiones} del escape room de ciberseguridad, analizar las evidencias del incidente y recuperar el código {codigo} que permitió revertir el ataque antes de que se materializara.',
@@ -109,7 +128,7 @@ final class TextosNuevos
     /** @return array<int, array{0:string,1:string,2:string,3:string,4:bool}> */
     public static function todos(): array
     {
-        return [...self::LOGIN, ...self::HUB, ...self::MISION, ...self::PRESENCIAL, ...self::CONSOLA, ...self::CERTIFICADO];
+        return [...self::LOGIN, ...self::HUB, ...self::MISION, ...self::PRESENCIAL, ...self::CONSOLA, ...self::PROYECCION, ...self::CERTIFICADO];
     }
 
     /**
