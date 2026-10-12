@@ -4,6 +4,7 @@
 @php
     $totalJugables = $jugables->count();
     $superadas     = $jugables->where('estado', 'superada')->count();
+    $codigoCompleto = $totalJugables > 0 && $superadas === $totalJugables;
 @endphp
 
 @section('contenido')
@@ -72,6 +73,14 @@
         </div>
         <p class="mt-2 text-[11px] text-muted">{{ $superadas }} de {{ $totalJugables }} misiones superadas</p>
     </div>
+
+    {{-- Con todos los fragmentos, el código completo pasa a ser lo primero. --}}
+    @if ($codigoCompleto)
+        <a href="{{ route('final') }}" class="btn btn-danger anim-in mt-6" style="--i:2">
+            @include('partials.icono', ['n' => 'shield', 'c' => 'w-4 h-4'])
+            {{ txt('hub.boton_codigo', 'Ingresar código de recuperación') }}
+        </a>
+    @endif
 
     <p class="eyebrow anim-in mt-7" style="--i:2">{{ txt('hub.misiones', 'Misiones disponibles') }}</p>
 
@@ -152,10 +161,12 @@
         @endforeach
     </div>
 
-    <a href="{{ route('final') }}" class="btn btn-danger anim-in mt-6" style="--i:8">
-        @include('partials.icono', ['n' => 'shield', 'c' => 'w-4 h-4'])
-        {{ txt('hub.boton_codigo', 'Ingresar código de recuperación') }}
-    </a>
+    @unless ($codigoCompleto)
+        <a href="{{ route('final') }}" class="btn btn-danger anim-in mt-6" style="--i:8">
+            @include('partials.icono', ['n' => 'shield', 'c' => 'w-4 h-4'])
+            {{ txt('hub.boton_codigo', 'Ingresar código de recuperación') }}
+        </a>
+    @endunless
 
     <form method="POST" action="{{ route('salir') }}" class="mt-3 text-center">
         @csrf

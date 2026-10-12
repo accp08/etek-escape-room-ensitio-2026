@@ -66,4 +66,21 @@ class JuegoTerminadoTest extends TestCase
 
         $this->get(route('hub'))->assertOk();
     }
+
+    public function test_con_todos_los_fragmentos_el_boton_del_codigo_va_sobre_las_misiones(): void
+    {
+        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $this->ana->id]);
+        $boton = route('final');
+
+        $pagina = $this->get(route('hub'))->assertOk()->getContent();
+        $this->assertGreaterThan(strpos($pagina, 'eyebrow anim-in mt-7'), strpos($pagina, $boton));
+
+        $juego = app(Juego::class);
+        $avance = $juego->comenzar($juego->partidaDe($this->ana)->misiones()->first());
+        $juego->responder($avance, 'COD1');
+
+        $pagina = $this->get(route('hub'))->assertOk()->getContent();
+        $this->assertLessThan(strpos($pagina, 'eyebrow anim-in mt-7'), strpos($pagina, $boton));
+        $this->assertSame(1, substr_count($pagina, 'href="'.$boton.'"'));
+    }
 }
