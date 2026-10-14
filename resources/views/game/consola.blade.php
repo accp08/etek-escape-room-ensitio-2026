@@ -183,7 +183,7 @@
     @endif
 
     @if (ajuste('video_final'))
-        {{-- Video de cierre a pantalla completa. El archivo (~21 MB) se pide al abrirlo. --}}
+        {{-- Video de cierre a pantalla completa. El archivo (~10 MB) se pide al abrirlo. --}}
         <div class="cons-video" data-cons-video hidden>
             <video class="cons-video-reproductor" data-video controls playsinline preload="none"
                    data-fuente="{{ route('consola.video') }}">
