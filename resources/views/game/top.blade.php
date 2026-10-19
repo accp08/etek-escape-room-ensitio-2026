@@ -1,9 +1,10 @@
 {{-- Top 3: pantalla pública que se proyecta en la sala. Un podio por cada
-     dominio permitido (Parámetros); si hay varios, rotan solos. Los podios
-     se refrescan sin recargar la página (ver iniciarTop en app.js).
+     dominio permitido (Parámetros) que ya tenga jugadores; si hay varios,
+     rotan solos y se pueden cambiar con ‹ › o con las flechas del teclado.
+     Los podios se refrescan sin recargar la página (ver iniciarTop en top.js).
 
      Todo se mide con --u (ver .proyeccion en app.css).
-     Teclado: F = pantalla completa. --}}
+     Teclado: F = pantalla completa · ← / → = dominio anterior / siguiente. --}}
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -52,13 +53,16 @@
             @include('partials.podios')
         </div>
 
-        @if (count($podios) > 1)
-            <div class="top-puntos" data-puntos>
-                @foreach ($podios as $podio)
-                    <span @if ($loop->first) data-activo @endif></span>
-                @endforeach
-            </div>
-        @endif
+        {{-- Navegación entre dominios: los puntos los pinta top.js según los podios. --}}
+        <nav class="top-nav" data-top-nav @if (count($podios) < 2) hidden @endif aria-label="Dominios">
+            <button type="button" class="top-flecha" data-top-anterior title="Dominio anterior (←)" aria-label="Dominio anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+            </button>
+            <div class="top-puntos" data-puntos></div>
+            <button type="button" class="top-flecha" data-top-siguiente title="Dominio siguiente (→)" aria-label="Dominio siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </button>
+        </nav>
 
         <p class="top-criterio">{{ txt('top.criterio', 'Más misiones superadas primero; a igualdad, menor tiempo.') }}</p>
     </main>

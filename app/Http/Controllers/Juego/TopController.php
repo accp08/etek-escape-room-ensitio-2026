@@ -8,8 +8,9 @@ use Illuminate\Http\Response;
 
 /**
  * Top 3: pantalla pública para proyectar en la sala con un podio por cada
- * dominio permitido (Parámetros › Dominios permitidos). Si no hay dominios
- * configurados, muestra un único podio general.
+ * dominio permitido (Parámetros › Dominios permitidos) que ya tenga
+ * jugadores en el ranking. Si no hay dominios configurados, o ninguno tiene
+ * jugadores todavía, muestra un único podio general.
  */
 class TopController extends Controller
 {
@@ -48,7 +49,7 @@ class TopController extends Controller
         $dominios = preg_split('/[\s,;]+/', mb_strtolower((string) ajuste('dominios_outlook', '')), -1, PREG_SPLIT_NO_EMPTY);
         $dominios = array_values(array_unique(array_map(fn (string $dominio): string => ltrim($dominio, '@'), $dominios)));
 
-        return collect($dominios ?: [null])->map(function (?string $dominio): array {
+        $podios = collect($dominios ?: [null])->map(function (?string $dominio): array {
             $filas = $this->juego->ranking(self::PUESTOS, $dominio)->map(fn (array $fila): array => [
                 'puesto' => $fila['puesto'],
                 'nombre' => $fila['nombre'],
@@ -58,8 +59,17 @@ class TopController extends Controller
                 'tiempo' => $fila['tiempo'],
             ])->all();
 
-            // Siempre tres lugares: los vacíos se muestran como «por definir».
-            return ['dominio' => $dominio, 'puestos' => array_pad($filas, self::PUESTOS, null)];
-        })->all();
+            return ['dominio' => $dominio, 'filas' => $filas];
+        });
+
+        // Los dominios sin jugadores no se muestran; si ninguno tiene, queda un podio general vacío.
+        $conJugadores = $podios->filter(fn (array $podio): bool => $podio['filas'] !== [])
+            ->whenEmpty(fn () => collect([['dominio' => null, 'filas' => []]]));
+
+        // Siempre tres lugares: los vacíos se muestran como «por definir».
+        return $conJugadores->map(fn (array $podio): array => [
+            'dominio' => $podio['dominio'],
+            'puestos' => array_pad($podio['filas'], self::PUESTOS, null),
+        ])->values()->all();
     }
 }

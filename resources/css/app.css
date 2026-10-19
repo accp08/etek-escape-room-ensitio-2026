@@ -2859,16 +2859,38 @@
 .top-vacio .top-pedestal { filter: grayscale(0.7) brightness(0.6); }
 .top-vacio .top-corona { opacity: 0.35; animation: none; }
 
-/* --- Pie: puntos del carrusel y criterio --- */
+/* --- Pie: navegación entre dominios (flechas + puntos) y criterio --- */
+.top-nav { display: flex; align-items: center; gap: calc(var(--u) * 1); }
+.top-nav[hidden] { display: none; }
+
+.top-flecha {
+    display: grid;
+    place-items: center;
+    width: calc(var(--u) * 2.4);
+    height: calc(var(--u) * 2.4);
+    border-radius: 999px;
+    border: 1px solid rgba(46, 91, 140, 0.55);
+    background: rgba(5, 12, 26, 0.7);
+    color: var(--color-ink-soft);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, opacity 0.4s;
+}
+.top-flecha:hover { border-color: rgba(0, 229, 255, 0.6); color: var(--color-cyan); }
+.top-flecha svg { width: 50%; height: 50%; }
+.proy-inactiva .top-flecha { opacity: 0.25; }
+
 .top-puntos { display: flex; gap: calc(var(--u) * 0.6); }
-.top-puntos span {
+.top-puntos button {
     width: calc(var(--u) * 0.7);
     height: calc(var(--u) * 0.7);
+    padding: 0;
+    border: 0;
     border-radius: 999px;
     background: rgba(152, 167, 195, 0.35);
+    cursor: pointer;
     transition: width 0.3s, background 0.3s;
 }
-.top-puntos span[data-activo] { width: calc(var(--u) * 2.2); background: var(--color-cyan); }
+.top-puntos button[data-activo] { width: calc(var(--u) * 2.2); background: var(--color-cyan); }
 
 .top-criterio {
     font-family: var(--font-mono);

@@ -10,7 +10,8 @@ use Tests\TestCase;
 
 /**
  * /top es una pantalla pública con un podio (top 3) por cada dominio
- * permitido. Sin dominios configurados muestra un único podio general.
+ * permitido que tenga jugadores. Sin dominios configurados muestra un único
+ * podio general.
  */
 class TopPorDominioTest extends TestCase
 {
@@ -58,6 +59,30 @@ class TopPorDominioTest extends TestCase
         $this->assertStringNotContainsString('Ciro Filial', $etek);
         $this->assertStringContainsString('Ciro Filial', $filial);
         $this->assertStringContainsString('Por definir', $filial);
+    }
+
+    public function test_los_dominios_sin_jugadores_no_se_muestran(): void
+    {
+        Ajuste::create(['clave' => 'dominios_outlook', 'valor' => 'etek.com,vacio.com']);
+
+        $this->jugador('Ana Etek', 'ana@etek.com', 5, 300);
+
+        $podios = $this->get(route('top.podios'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('etek.com', $podios);
+        $this->assertStringNotContainsString('vacio.com', $podios);
+        $this->assertSame(1, substr_count($podios, 'data-slide'));
+    }
+
+    public function test_si_ningun_dominio_tiene_jugadores_queda_un_podio_vacio(): void
+    {
+        Ajuste::create(['clave' => 'dominios_outlook', 'valor' => 'etek.com,vacio.com']);
+
+        $podios = $this->get(route('top.podios'))->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($podios, 'data-slide'));
+        $this->assertStringContainsString('Por definir', $podios);
+        $this->assertStringNotContainsString('vacio.com', $podios);
     }
 
     public function test_sin_dominios_muestra_el_podio_general(): void
