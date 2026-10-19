@@ -282,7 +282,7 @@ class PartidaController extends Controller
     public function ranking(Request $peticion)
     {
         return view('game.ranking', [
-            'ranking' => $this->juego->ranking(),
+            'ranking' => $this->juego->rankingGeneral(),
             'partida' => $this->partida($peticion),
         ]);
     }

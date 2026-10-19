@@ -504,14 +504,31 @@ class Juego
      */
     public function ranking(int $limite = 50, ?string $dominio = null): Collection
     {
-        return $this->enRanking()
+        return $this->ordenarRanking(
+            $this->enRanking()
+                ->when($dominio, fn ($consulta) => $consulta->whereHas('participante', fn ($p) => $p
+                    ->where('correo', 'like', '%@'.addcslashes($dominio, '%_\\')))),
+            $limite,
+        );
+    }
+
+    /**
+     * Ranking general de /ranking: todos los que ya validaron su código en la
+     * consola, de cualquier dominio y sin tope de puestos.
+     */
+    public function rankingGeneral(): Collection
+    {
+        return $this->ordenarRanking($this->enRanking());
+    }
+
+    private function ordenarRanking($consulta, ?int $limite = null): Collection
+    {
+        return $consulta
             ->with('participante')
-            ->when($dominio, fn ($consulta) => $consulta->whereHas('participante', fn ($p) => $p
-                ->where('correo', 'like', '%@'.addcslashes($dominio, '%_\\'))))
             ->orderByDesc('aciertos')
             ->orderBy('segundos_jugados')
             ->orderBy('id')   // desempate estable: el que llegó primero
-            ->limit($limite)
+            ->when($limite, fn ($c) => $c->limit($limite))
             ->get()
             ->values()
             ->map(function (Partida $partida, int $i) {

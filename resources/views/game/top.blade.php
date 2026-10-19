@@ -1,6 +1,6 @@
-{{-- Top 3: pantalla pública que se proyecta en la sala. Un podio por cada
-     dominio permitido (Parámetros) que ya tenga jugadores; si hay varios,
-     rotan solos y se pueden cambiar con ‹ › o con las flechas del teclado.
+{{-- Top 3: pantalla pública que se proyecta en la sala. El podio general
+     (todos los dominios) y uno por cada dominio con jugadores; rotan solos y
+     se cambian con un clic en el podio, con ‹ › o con las flechas del teclado.
      Los podios se refrescan sin recargar la página (ver iniciarTop en top.js).
 
      Todo se mide con --u (ver .proyeccion en app.css).

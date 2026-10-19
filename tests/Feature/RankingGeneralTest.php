@@ -1,0 +1,87 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Http\Middleware\ParticipanteAutenticado;
+use App\Models\Mision;
+use App\Models\Participante;
+use App\Models\Partida;
+use App\Models\PartidaMision;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+/**
+ * /ranking muestra a todos los que ya validaron su código en la consola, de
+ * cualquier dominio y sin tope de puestos.
+ */
+class RankingGeneralTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private Mision $mision;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mision = Mision::create([
+            'slug' => 'uno', 'titulo' => 'Uno', 'etiqueta' => 'Misión 1', 'codigo_presencial' => 'A', 'duracion' => 180, 'intentos' => 2,
+        ]);
+    }
+
+    private function jugador(string $nombre, string $correo, int $aciertos, int $segundos, bool $jugo = true, bool $validado = false): Participante
+    {
+        $participante = Participante::create([
+            'nombre' => $nombre,
+            'documento' => (string) random_int(1000000, 9999999),
+            'correo' => $correo,
+            'codigo_acceso' => Participante::generarCodigo(),
+        ]);
+
+        $partida = Partida::create([
+            'participante_id' => $participante->id,
+            'estado' => 'en_curso',
+            'aciertos' => $aciertos,
+            'aciertos_posibles' => 5,
+            'segundos_jugados' => $segundos,
+            'codigo_final_en' => $validado ? now() : null,
+        ]);
+
+        PartidaMision::create([
+            'partida_id' => $partida->id,
+            'mision_id' => $this->mision->id,
+            'estado' => $jugo ? 'fallada' : 'pendiente',
+            'intentos_usados' => $jugo ? 1 : 0,
+        ]);
+
+        return $participante;
+    }
+
+    public function test_muestra_a_todos_los_que_validaron_sin_importar_el_dominio(): void
+    {
+        $ana = $this->jugador('Ana Etek', 'ana@etek.com', 5, 300, validado: true);
+        $this->jugador('Beto Otra', 'beto@otra.com', 5, 200, validado: true);
+        $this->jugador('Ciro Gmail', 'ciro@gmail.com', 4, 40, validado: true);
+        $this->jugador('Dora Sin Validar', 'dora@etek.com', 5, 10);
+
+        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $ana->id])
+            ->get(route('ranking'))
+            ->assertOk()
+            ->assertSeeInOrder(['Beto Otra', 'Ana Etek', 'Ciro Gmail'])
+            ->assertDontSee('Dora Sin Validar');
+    }
+
+    public function test_no_tiene_tope_de_puestos(): void
+    {
+        $ana = $this->jugador('Ana Etek', 'ana@etek.com', 5, 1, validado: true);
+
+        foreach (range(1, 60) as $i) {
+            $this->jugador("Jugador {$i}", "j{$i}@etek.com", 5, 100 + $i, validado: true);
+        }
+
+        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $ana->id])
+            ->get(route('ranking'))
+            ->assertOk()
+            ->assertSee('Jugador 60');
+    }
+}

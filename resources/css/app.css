@@ -2618,6 +2618,7 @@
     min-height: 0;
 }
 .top-slide[data-activo] { display: grid; animation: topAparecer 0.6s ease-out both; }
+.top-slide[title] { cursor: pointer; }
 
 @keyframes topAparecer { from { opacity: 0; transform: translateY(calc(var(--u) * 1)); } }
 

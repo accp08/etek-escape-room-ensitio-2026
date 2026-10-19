@@ -9,9 +9,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * /top es una pantalla pública con un podio (top 3) por cada dominio
- * permitido que tenga jugadores. Sin dominios configurados muestra un único
- * podio general.
+ * /top es una pantalla pública: primero el podio general (top 3 de todos los
+ * dominios) y luego un podio por cada dominio que tenga jugadores.
  */
 class TopPorDominioTest extends TestCase
 {
@@ -36,29 +35,45 @@ class TopPorDominioTest extends TestCase
         ]);
     }
 
-    public function test_muestra_un_podio_por_dominio_permitido(): void
+    /** @return array<int, string> El HTML de cada podio, en orden. */
+    private function podios(): array
     {
-        Ajuste::create(['clave' => 'dominios_outlook', 'valor' => 'etek.com,filial.com']);
+        $html = $this->get(route('top.podios'))->assertOk()->assertHeader('X-Firma')->getContent();
+
+        return array_slice(explode('<section class="top-slide"', $html), 1);
+    }
+
+    public function test_primero_el_podio_general_con_todos_los_dominios_y_luego_uno_por_dominio(): void
+    {
+        Ajuste::create(['clave' => 'dominios_outlook', 'valor' => 'filial.com,etek.com']);
 
         $this->jugador('Ana Etek', 'ana@etek.com', 5, 300);
         $this->jugador('Beto Etek', 'beto@ETEK.com', 5, 200);
         $this->jugador('Ciro Filial', 'ciro@filial.com', 4, 100);
         $this->jugador('Dora Externa', 'dora@otra.com', 5, 50);
 
-        $respuesta = $this->get(route('top'))->assertOk();
+        $this->get(route('top'))->assertOk()->assertSee('Dora Externa');
 
-        $respuesta->assertSee('etek.com')->assertSee('filial.com')
-            ->assertSee('Ana Etek')->assertSee('Beto Etek')->assertSee('Ciro Filial')
-            ->assertDontSee('Dora Externa');
+        [$general, $filial, $etek, $otra] = $this->podios();
 
-        // Cada podio trae solo su dominio, y en orden: Beto (menos tiempo) antes que Ana.
-        $podios = $this->get(route('top.podios'))->assertOk()->assertHeader('X-Firma')->getContent();
-        [$etek, $filial] = explode('data-slide', substr($podios, strpos($podios, 'data-slide') + 10), 2);
+        // General: todos, sin importar el dominio. Dora (5, 50 s), Beto (5, 200 s), Ana (5, 300 s).
+        $this->assertStringContainsString('Ranking general', $general);
+        foreach (['Dora Externa', 'Beto Etek', 'Ana Etek'] as $nombre) {
+            $this->assertStringContainsString($nombre, $general);
+        }
+        $this->assertStringNotContainsString('Ciro Filial', $general);
 
-        $this->assertStringContainsString('Ana Etek', $etek);
-        $this->assertStringNotContainsString('Ciro Filial', $etek);
+        // Los dominios permitidos van primero, en el orden configurado; luego los demás.
+        $this->assertStringContainsString('filial.com', $filial);
         $this->assertStringContainsString('Ciro Filial', $filial);
         $this->assertStringContainsString('Por definir', $filial);
+
+        $this->assertStringContainsString('etek.com', $etek);
+        $this->assertStringContainsString('Ana Etek', $etek);
+        $this->assertStringNotContainsString('Ciro Filial', $etek);
+
+        $this->assertStringContainsString('otra.com', $otra);
+        $this->assertStringContainsString('Dora Externa', $otra);
     }
 
     public function test_los_dominios_sin_jugadores_no_se_muestran(): void
@@ -66,23 +81,34 @@ class TopPorDominioTest extends TestCase
         Ajuste::create(['clave' => 'dominios_outlook', 'valor' => 'etek.com,vacio.com']);
 
         $this->jugador('Ana Etek', 'ana@etek.com', 5, 300);
+        $this->jugador('Ciro Filial', 'ciro@filial.com', 4, 100);
 
-        $podios = $this->get(route('top.podios'))->assertOk()->getContent();
+        $podios = $this->podios();
 
-        $this->assertStringContainsString('etek.com', $podios);
-        $this->assertStringNotContainsString('vacio.com', $podios);
-        $this->assertSame(1, substr_count($podios, 'data-slide'));
+        $this->assertCount(3, $podios);
+        $this->assertStringNotContainsString('vacio.com', implode('', $podios));
+    }
+
+    public function test_con_un_solo_dominio_solo_queda_el_podio_general(): void
+    {
+        $this->jugador('Ana Etek', 'ana@etek.com', 5, 300);
+        $this->jugador('Beto Etek', 'beto@etek.com', 5, 200);
+
+        $podios = $this->podios();
+
+        $this->assertCount(1, $podios);
+        $this->assertStringContainsString('Ranking general', $podios[0]);
     }
 
     public function test_si_ningun_dominio_tiene_jugadores_queda_un_podio_vacio(): void
     {
         Ajuste::create(['clave' => 'dominios_outlook', 'valor' => 'etek.com,vacio.com']);
 
-        $podios = $this->get(route('top.podios'))->assertOk()->getContent();
+        $podios = $this->podios();
 
-        $this->assertSame(1, substr_count($podios, 'data-slide'));
-        $this->assertStringContainsString('Por definir', $podios);
-        $this->assertStringNotContainsString('vacio.com', $podios);
+        $this->assertCount(1, $podios);
+        $this->assertStringContainsString('Por definir', $podios[0]);
+        $this->assertStringNotContainsString('vacio.com', $podios[0]);
     }
 
     public function test_sin_dominios_muestra_el_podio_general(): void

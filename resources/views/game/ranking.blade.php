@@ -98,7 +98,7 @@
 
         @unless ($yo)
             <p class="mt-4 text-center text-[11px] text-muted">
-                Tu partida aparecerá aquí cuando sumes tus primeros aciertos.
+                Tu partida aparecerá aquí cuando valides tu código en la consola.
             </p>
         @endunless
     @endif

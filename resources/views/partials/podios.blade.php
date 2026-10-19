@@ -1,5 +1,6 @@
-{{-- Podios de la pantalla /top: uno por dominio permitido con jugadores. Lo pinta
-     TopController y la pantalla lo vuelve a pedir cada cierto tiempo. --}}
+{{-- Podios de la pantalla /top: el general y uno por dominio con jugadores. Lo pinta
+     TopController y la pantalla lo vuelve a pedir cada cierto tiempo. Un clic
+     en el podio pasa al siguiente. --}}
 @php
     $iniciales = fn (string $nombre) => \Illuminate\Support\Str::of($nombre)->explode(' ')->filter()->take(2)
         ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
@@ -7,7 +8,8 @@
 @endphp
 
 @foreach ($podios as $podio)
-    <section class="top-slide" data-slide="{{ $podio['dominio'] }}" @if ($loop->first) data-activo @endif>
+    <section class="top-slide" data-slide="{{ $podio['dominio'] }}" @if ($loop->first) data-activo @endif
+             @if (count($podios) > 1) title="Clic para ver el siguiente" @endif>
         <div class="top-encabezado">
             <p class="proy-rotulo">{{ txt('top.rotulo', 'Los mejores agentes') }}</p>
             <h1 class="top-titulo">{{ txt('top.titulo', 'Top 3') }}</h1>

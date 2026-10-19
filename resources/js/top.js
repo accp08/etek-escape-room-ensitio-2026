@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/* Top 3 (/top): podio por dominio permitido con jugadores             */
+/* Top 3 (/top): podio general y uno por dominio con jugadores         */
 /* ------------------------------------------------------------------ */
 
 const ROTACION = 12000;     // ms por podio cuando hay varios dominios
@@ -53,6 +53,11 @@ export function iniciarTop() {
             return punto;
         }));
     };
+
+    // Un clic en el podio pasa al siguiente (delegado: los podios se repintan).
+    contenedor.addEventListener('click', () => {
+        if (diapositivas().length > 1) ir(actual + 1);
+    });
 
     cuerpo.querySelector('[data-top-anterior]')?.addEventListener('click', () => ir(actual - 1));
     cuerpo.querySelector('[data-top-siguiente]')?.addEventListener('click', () => ir(actual + 1));
