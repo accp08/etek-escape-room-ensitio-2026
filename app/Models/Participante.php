@@ -13,6 +13,9 @@ class Participante extends Model
 {
     protected $table = 'participantes';
 
+    /** El token de la sesión activa nunca se serializa hacia el cliente. */
+    protected $hidden = ['sesion_token'];
+
     protected function casts(): array
     {
         return ['activo' => 'boolean', 'visto_en' => 'datetime'];

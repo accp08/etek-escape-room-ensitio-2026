@@ -133,8 +133,8 @@ class AccesoController extends Controller
             ]);
         }
 
-        $peticion->session()->regenerate();
-        $peticion->session()->put(ParticipanteAutenticado::CLAVE_SESION, $participante->id);
+        // Si ya tenía sesión en otro dispositivo, esa queda cerrada.
+        ParticipanteAutenticado::iniciar($peticion, $participante);
 
         // La partida se crea (o se retoma) al entrar.
         $partida = $juego->partidaDe($participante);
@@ -167,7 +167,7 @@ class AccesoController extends Controller
     {
         Bitacora::juego('salida', 'El participante cerró su sesión');
 
-        $peticion->session()->forget(ParticipanteAutenticado::CLAVE_SESION);
+        ParticipanteAutenticado::cerrar($peticion);
         $peticion->session()->regenerateToken();
 
         return redirect()->route('login');
@@ -175,8 +175,7 @@ class AccesoController extends Controller
 
     private function iniciarPartida(Request $peticion, Juego $juego, Participante $participante): RedirectResponse
     {
-        $peticion->session()->regenerate();
-        $peticion->session()->put(ParticipanteAutenticado::CLAVE_SESION, $participante->id);
+        ParticipanteAutenticado::iniciar($peticion, $participante);
         $partida = $juego->partidaDe($participante);
 
         Bitacora::juego('acceso', "{$participante->nombre} entró al juego", ['partida_id' => $partida->id]);

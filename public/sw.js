@@ -1,14 +1,18 @@
 /**
  * Service worker mínimo para habilitar la instalación como PWA.
- * Estrategia: network-first con respaldo en caché (apta para maquetación).
- * En producción conviene definir una lista de precache y versionado.
+ *
+ * Solo guarda en caché archivos estáticos (CSS, JS, íconos, fuentes). Las
+ * páginas del juego NUNCA se cachean: llevan la sesión del jugador, y una
+ * copia guardada podría mostrarle a alguien la partida de otro.
+ *
+ * Cambiar CACHE borra en los celulares todo lo que guardó la versión anterior.
  */
 
-const CACHE = 'ciberamenaza-v1';
-const OFFLINE_FALLBACK = '/';
+const CACHE = 'ciberamenaza-v2';
 
-self.addEventListener('install', (event) => {
-    event.waitUntil(caches.open(CACHE).then((c) => c.add(OFFLINE_FALLBACK)));
+const ESTATICO = /^\/(build|icons|marca|fonts)\//;
+
+self.addEventListener('install', () => {
     self.skipWaiting();
 });
 
@@ -22,17 +26,25 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    if (event.request.method !== 'GET') return;
+    const peticion = event.request;
+    if (peticion.method !== 'GET') return;
     // Audio y video piden rangos (respuestas 206): que los maneje el navegador.
-    if (event.request.headers.has('range')) return;
+    if (peticion.headers.has('range')) return;
+
+    const url = new URL(peticion.url);
+
+    // Páginas y todo lo demás: directo a la red, sin guardar nada.
+    if (url.origin !== self.location.origin || !ESTATICO.test(url.pathname)) return;
 
     event.respondWith(
-        fetch(event.request)
+        fetch(peticion)
             .then((respuesta) => {
-                const copia = respuesta.clone();
-                caches.open(CACHE).then((c) => c.put(event.request, copia)).catch(() => {});
+                if (respuesta.ok) {
+                    const copia = respuesta.clone();
+                    caches.open(CACHE).then((c) => c.put(peticion, copia)).catch(() => {});
+                }
                 return respuesta;
             })
-            .catch(() => caches.match(event.request).then((r) => r || caches.match(OFFLINE_FALLBACK)))
+            .catch(() => caches.match(peticion))
     );
 });

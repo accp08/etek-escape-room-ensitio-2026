@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SinCache;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // La consola de recuperación es pública y pasa horas abierta en el
         // televisor: un token CSRF vencería y no protege nada sin sesión.
         $middleware->validateCsrfTokens(except: ['consola/verificar']);
+
+        // Las páginas con sesión nunca se cachean (ver SinCache).
+        $middleware->web(append: [SinCache::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
