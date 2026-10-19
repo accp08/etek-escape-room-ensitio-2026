@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
  */
 #[Fillable([
     'slug', 'titulo', 'etiqueta', 'icono', 'brief', 'instruccion',
-    'codigo_presencial', 'token_qr', 'audio_ruta', 'duracion', 'intentos', 'orden',
+    'codigo_presencial', 'codigos_clasificacion', 'token_qr', 'audio_ruta', 'duracion', 'intentos', 'orden',
     'jugable', 'visible',
 ])]
 class Mision extends Model
@@ -24,8 +24,19 @@ class Mision extends Model
     /** Cada misión vale un acierto: superarla. */
     public const ACIERTOS_POSIBLES = 1;
 
-    /** El código de la estación y el token del QR nunca se serializan hacia el cliente. */
-    protected $hidden = ['codigo_presencial', 'token_qr'];
+    /** Misión de clasificación de la información: pide un código por nivel. */
+    public const SLUG_CLASIFICACION = 'clasificacion';
+
+    /** Niveles de clasificación, en el orden en que se piden. */
+    public const NIVELES_CLASIFICACION = [
+        'publica' => 'Pública',
+        'interna' => 'Interna',
+        'reservada' => 'Reservada',
+        'confidencial' => 'Confidencial',
+    ];
+
+    /** Los códigos de la estación y el token del QR nunca se serializan hacia el cliente. */
+    protected $hidden = ['codigo_presencial', 'codigos_clasificacion', 'token_qr'];
 
     protected static function booted(): void
     {
@@ -37,6 +48,7 @@ class Mision extends Model
     protected function casts(): array
     {
         return [
+            'codigos_clasificacion' => 'array',
             'jugable' => 'boolean',
             'visible' => 'boolean',
         ];
@@ -108,9 +120,66 @@ class Mision extends Model
 
     /* ---------------- Código de la estación ---------------- */
 
-    /** Compara sin importar mayúsculas, espacios ni guiones. */
-    public function codigoPresencialCoincide(?string $intento): bool
+    /** La misión de clasificación pide cuatro códigos, uno por nivel, en lugar de uno solo. */
+    public function pideCodigosPorNivel(): bool
     {
+        return $this->slug === self::SLUG_CLASIFICACION;
+    }
+
+    /** Código esperado para un nivel de clasificación, o null si no se ha fijado. */
+    public function codigoDeNivel(string $nivel): ?string
+    {
+        return ($this->codigos_clasificacion ?? [])[$nivel] ?? null;
+    }
+
+    /** Sin código (o sin alguno de los cuatro niveles), nadie puede superar la misión. */
+    public function tieneCodigo(): bool
+    {
+        if (! $this->pideCodigosPorNivel()) {
+            return self::normalizarCodigo($this->codigo_presencial) !== '';
+        }
+
+        foreach (array_keys(self::NIVELES_CLASIFICACION) as $nivel) {
+            if (self::normalizarCodigo($this->codigoDeNivel($nivel)) === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Compara sin importar mayúsculas, espacios ni guiones. En la misión de
+     * clasificación recibe un arreglo nivel => código y exige los cuatro.
+     *
+     * @param  string|array<string, string|null>|null  $intento
+     */
+    public function codigoPresencialCoincide(string|array|null $intento): bool
+    {
+        if ($this->pideCodigosPorNivel()) {
+            if (! is_array($intento) || ! $this->tieneCodigo()) {
+                return false;
+            }
+
+            foreach (array_keys(self::NIVELES_CLASIFICACION) as $nivel) {
+                $escrito = $intento[$nivel] ?? null;
+
+                if (! is_string($escrito) && $escrito !== null) {
+                    return false;
+                }
+
+                if (! hash_equals(self::normalizarCodigo($this->codigoDeNivel($nivel)), self::normalizarCodigo($escrito))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if (! is_string($intento) && $intento !== null) {
+            return false;
+        }
+
         $esperado = self::normalizarCodigo($this->codigo_presencial);
 
         return $esperado !== '' && hash_equals($esperado, self::normalizarCodigo($intento));

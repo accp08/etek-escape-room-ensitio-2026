@@ -24,10 +24,24 @@
     </p>
 
     <div class="panel anim-in mt-7 p-5" style="--i:4">
-        <label for="codigo" class="field-label">{{ txt('mision.codigo_campo', 'Código de la misión') }}</label>
-        <input id="codigo" name="codigo" class="field mt-1 text-center font-mono text-2xl font-extrabold uppercase tracking-[.3em]"
-               maxlength="60" autocapitalize="characters" autocorrect="off" spellcheck="false"
-               value="{{ old('codigo') }}" placeholder="· · · ·" autofocus>
+        @if ($mision->pideCodigosPorNivel())
+            {{-- Misión de clasificación: un código por nivel. --}}
+            <div class="space-y-4">
+                @foreach (\App\Models\Mision::NIVELES_CLASIFICACION as $nivel => $nombre)
+                    <div>
+                        <label for="codigo-{{ $nivel }}" class="field-label">{{ $nombre }}</label>
+                        <input id="codigo-{{ $nivel }}" name="codigo[{{ $nivel }}]" class="field mt-1 text-center font-mono text-xl font-extrabold uppercase tracking-[.25em]"
+                               maxlength="60" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                               value="{{ old('codigo.'.$nivel) }}" placeholder="· · · ·" @if ($loop->first) autofocus @endif>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <label for="codigo" class="field-label">{{ txt('mision.codigo_campo', 'Código de la misión') }}</label>
+            <input id="codigo" name="codigo" class="field mt-1 text-center font-mono text-2xl font-extrabold uppercase tracking-[.3em]"
+                   maxlength="60" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                   value="{{ old('codigo') }}" placeholder="· · · ·" autofocus>
+        @endif
 
         @error('codigo')
             <p class="mt-2 text-[12px] text-pink-soft">{{ $message }}</p>

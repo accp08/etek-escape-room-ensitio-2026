@@ -265,7 +265,10 @@ class Juego
      * @return array{resultado:string, aciertos:int, posibles:int, porcentaje:float}
      *                                                                               resultado: superada | reintento | fallada | tiempo
      */
-    public function responder(PartidaMision $avance, ?string $codigo): array
+    /**
+     * @param  string|array<string, string>|null  $codigo  arreglo nivel => código en la misión de clasificación
+     */
+    public function responder(PartidaMision $avance, string|array|null $codigo): array
     {
         $mision = $avance->mision;
 
@@ -278,7 +281,9 @@ class Juego
                 'posibles' => $avance->aciertos_posibles, 'porcentaje' => 0.0];
         }
 
-        $codigo = mb_substr(trim((string) $codigo), 0, 60);
+        $codigo = is_array($codigo)
+            ? array_map(fn ($c) => mb_substr(trim((string) $c), 0, 60), $codigo)
+            : mb_substr(trim((string) $codigo), 0, 60);
         $superada = $mision->codigoPresencialCoincide($codigo);
 
         $avance->increment('intentos_usados');

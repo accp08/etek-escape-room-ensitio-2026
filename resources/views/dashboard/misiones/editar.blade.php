@@ -66,15 +66,34 @@
             <input name="orden" type="number" class="field" value="{{ old('orden', $mision->orden) }}" min="0" max="99" required>
         </div>
 
-        <div class="md:col-span-2">
-            <label class="field-label">Código de la estación</label>
-            <input name="codigo_presencial" class="field font-mono uppercase" maxlength="40" autocomplete="off"
-                   value="{{ old('codigo_presencial', $mision->codigo_presencial) }}" placeholder="Ej. 4F7K2">
-            <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
-                El que el participante obtiene al resolver el reto físico. No distingue mayúsculas, espacios ni guiones.
-                Sin código, nadie puede superar la misión.
-            </p>
-        </div>
+        @if ($mision->pideCodigosPorNivel())
+            <div class="md:col-span-2">
+                <label class="field-label">Códigos de la estación</label>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    @foreach (\App\Models\Mision::NIVELES_CLASIFICACION as $nivel => $nombre)
+                        <div>
+                            <label for="codigo-{{ $nivel }}" class="mb-1 block text-[11px] font-semibold text-ink-soft">{{ $nombre }}</label>
+                            <input id="codigo-{{ $nivel }}" name="codigos_clasificacion[{{ $nivel }}]" class="field font-mono uppercase" maxlength="40" autocomplete="off"
+                                   value="{{ old('codigos_clasificacion.'.$nivel, $mision->codigoDeNivel($nivel)) }}" placeholder="Ej. 4F7K2">
+                        </div>
+                    @endforeach
+                </div>
+                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
+                    Uno por nivel de clasificación. El participante debe escribir los cuatro correctos para superar la misión.
+                    No distinguen mayúsculas, espacios ni guiones. Si falta alguno, nadie puede superarla.
+                </p>
+            </div>
+        @else
+            <div class="md:col-span-2">
+                <label class="field-label">Código de la estación</label>
+                <input name="codigo_presencial" class="field font-mono uppercase" maxlength="40" autocomplete="off"
+                       value="{{ old('codigo_presencial', $mision->codigo_presencial) }}" placeholder="Ej. 4F7K2">
+                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
+                    El que el participante obtiene al resolver el reto físico. No distingue mayúsculas, espacios ni guiones.
+                    Sin código, nadie puede superar la misión.
+                </p>
+            </div>
+        @endif
     </div>
 
     <div class="mt-4">
@@ -147,7 +166,7 @@
                 Proyéctalo en el televisor de la estación o imprímelo. Al escanearlo, la misión se activa
                 para el participante y arranca el cronómetro; luego escribe el código del reto.
             </p>
-            @unless ($mision->codigo_presencial)
+            @unless ($mision->tieneCodigo())
                 <p class="aviso aviso-error">Esta misión aún no tiene código: nadie podrá superarla.</p>
             @endunless
             <p class="break-all font-mono text-[10.5px]">{{ $mision->urlActivacion() }}</p>

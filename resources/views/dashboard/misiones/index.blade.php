@@ -43,7 +43,7 @@
                     </div>
 
                     <div class="flex shrink-0 items-center gap-2">
-                        @if ($mision->jugable && ! $mision->codigo_presencial)
+                        @if ($mision->jugable && ! $mision->tieneCodigo())
                             <span class="badge badge-pink">Sin código</span>
                         @endif
                         @if ($mision->jugable)

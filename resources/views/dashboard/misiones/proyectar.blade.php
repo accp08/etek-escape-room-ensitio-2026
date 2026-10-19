@@ -180,7 +180,7 @@
     </nav>
 
     @auth
-        @unless ($mision->codigo_presencial)
+        @unless ($mision->tieneCodigo())
             {{-- Solo para el administrador: desaparece junto con los controles. --}}
             <p class="proy-aviso" data-proy-controles>Esta misión aún no tiene código: nadie podrá superarla.</p>
         @endunless

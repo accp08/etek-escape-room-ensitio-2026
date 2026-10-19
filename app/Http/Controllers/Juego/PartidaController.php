@@ -154,15 +154,34 @@ class PartidaController extends Controller
             return redirect()->route('mision', $mision->slug);
         }
 
-        $peticion->validate(['codigo' => ['nullable', 'string', 'max:60']]);
+        // La misión de clasificación envía un código por nivel; las demás, uno solo.
+        if ($mision->pideCodigosPorNivel()) {
+            $peticion->validate([
+                'codigo' => ['nullable', 'array'],
+                'codigo.*' => ['nullable', 'string', 'max:60'],
+            ]);
 
-        // Un envío vacío con tiempo disponible no consume la oportunidad.
-        // Si el tiempo venció, el cronómetro envía el formulario vacío y se cierra.
-        if (blank($peticion->input('codigo')) && ! $avance->sinTiempo()) {
-            return back()->withErrors(['codigo' => 'Escribe el código que obtuviste en la estación.']);
+            $codigo = [];
+            foreach (array_keys(Mision::NIVELES_CLASIFICACION) as $nivel) {
+                $codigo[$nivel] = (string) $peticion->input("codigo.{$nivel}", '');
+            }
+            $vacio = collect($codigo)->contains(fn (string $c): bool => blank($c));
+            $aviso = 'Escribe los cuatro códigos que obtuviste en la estación.';
+        } else {
+            $peticion->validate(['codigo' => ['nullable', 'string', 'max:60']]);
+
+            $codigo = $peticion->input('codigo');
+            $vacio = blank($codigo);
+            $aviso = 'Escribe el código que obtuviste en la estación.';
         }
 
-        $juicio = $this->juego->responder($avance, $peticion->input('codigo'));
+        // Un envío vacío (o incompleto) con tiempo disponible no consume la oportunidad.
+        // Si el tiempo venció, el cronómetro envía el formulario como esté y se cierra.
+        if ($vacio && ! $avance->sinTiempo()) {
+            return back()->withInput()->withErrors(['codigo' => $aviso]);
+        }
+
+        $juicio = $this->juego->responder($avance, $codigo);
 
         Bitacora::juego(
             'mision.'.$juicio['resultado'],

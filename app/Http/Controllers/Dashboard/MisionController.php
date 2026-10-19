@@ -39,6 +39,8 @@ class MisionController extends Controller
             'intentos' => ['required', 'integer', 'min:0', 'max:99'],   // 0 = ilimitadas
             'orden' => ['required', 'integer', 'min:0', 'max:99'],
             'codigo_presencial' => ['nullable', 'string', 'max:40'],   // lo entrega la estación física
+            'codigos_clasificacion' => ['nullable', 'array'],          // misión de clasificación: uno por nivel
+            'codigos_clasificacion.*' => ['nullable', 'string', 'max:40'],
             'audio' => Audio::reglas(),   // suena en la pantalla de proyección
         ], Audio::mensajes('audio'));
 
@@ -52,6 +54,16 @@ class MisionController extends Controller
         }
 
         $datos['codigo_presencial'] = trim((string) ($datos['codigo_presencial'] ?? '')) ?: null;
+
+        if ($mision->pideCodigosPorNivel()) {
+            $codigos = [];
+            foreach (array_keys(Mision::NIVELES_CLASIFICACION) as $nivel) {
+                $codigos[$nivel] = trim((string) ($datos['codigos_clasificacion'][$nivel] ?? '')) ?: null;
+            }
+            $datos['codigos_clasificacion'] = $codigos;
+        } else {
+            unset($datos['codigos_clasificacion']);
+        }
 
         // La instrucción se imprime con {!! !!} en el juego: se sanea aquí.
         $datos['instruccion'] = HtmlSeguro::limpiar($datos['instruccion'] ?? '');
