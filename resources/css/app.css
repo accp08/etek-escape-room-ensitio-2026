@@ -1034,7 +1034,7 @@
 .placa-md img { height: 40px; }
 
 .placa-lg { padding: 8px 12px;  border-radius: 14px; }
-.placa-lg img { height: 64px; }
+.placa-lg img { height: 84px; }
 
 /* Dentro del certificado escala con el resto del diseño (unidades cqw). */
 .placa-cert {
