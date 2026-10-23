@@ -39,6 +39,7 @@ class ParticipanteController extends Controller
         ], ['correo' => 'correo']);
 
         $datos['activo'] = $peticion->boolean('activo', true);
+        $datos['en_ranking'] = $peticion->boolean('en_ranking', true);
 
         if ($participante?->exists) {
             $participante->update($datos);
@@ -126,11 +127,11 @@ class ParticipanteController extends Controller
     public function exportarParticipantes(): StreamedResponse
     {
         $filas = Participante::orderBy('nombre')->get()->map(fn ($p) => [
-            $p->nombre, $p->area, $p->correo, $p->activo ? 'Sí' : 'No',
+            $p->nombre, $p->area, $p->correo, $p->activo ? 'Sí' : 'No', $p->en_ranking ? 'Sí' : 'No',
         ]);
 
         return $this->csv('participantes-'.now()->format('Y-m-d-Hi').'.csv', [
-            ['Nombre', 'Área', 'Correo', 'Activo'],
+            ['Nombre', 'Área', 'Correo', 'Activo', 'En ranking'],
             ...$filas,
         ]);
     }

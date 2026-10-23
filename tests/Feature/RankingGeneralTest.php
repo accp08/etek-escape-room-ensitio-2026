@@ -8,6 +8,7 @@ use App\Models\Mision;
 use App\Models\Participante;
 use App\Models\Partida;
 use App\Models\PartidaMision;
+use App\Models\User;
 use App\Services\Juego;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -99,6 +100,32 @@ class RankingGeneralTest extends TestCase
             ->assertOk()
             ->assertSee('Ana Lenta')
             ->assertDontSee('Beto Rapido');
+
+        $juego = app(Juego::class);
+        $this->assertSame(1, $juego->puestoDe($ana->partidaActual()));
+        $this->assertNull($juego->puestoDe($beto->partidaActual()));
+        $this->assertSame(1, $juego->totalRanking());
+    }
+
+    public function test_oculta_a_los_participantes_sacados_del_ranking(): void
+    {
+        $ana = $this->jugador('Ana Visible', 'ana@etek.com', 5, 300, validado: true);
+        $beto = $this->jugador('Beto Oculto', 'beto@etek.com', 5, 100, validado: true);
+
+        $this->actingAs(User::factory()->create())
+            ->put(route('dashboard.participantes.actualizar', $beto), [
+                'nombre' => $beto->nombre, 'correo' => $beto->correo, 'activo' => '1', 'en_ranking' => '0',
+            ])
+            ->assertRedirect();
+
+        $this->assertFalse($beto->fresh()->en_ranking);
+        $this->assertTrue($beto->fresh()->activo);
+
+        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $ana->id])
+            ->get(route('ranking'))
+            ->assertOk()
+            ->assertSee('Ana Visible')
+            ->assertDontSee('Beto Oculto');
 
         $juego = app(Juego::class);
         $this->assertSame(1, $juego->puestoDe($ana->partidaActual()));

@@ -442,19 +442,17 @@ class Juego
     }
 
     /**
-     * Partidas que entran al ranking: solo las que ya validaron su código de
-     * recuperación en la consola.
-     */
-    /**
      * Partidas que pueden aparecer en el ranking: validaron su código en la
-     * consola, tienen aciertos y no se terminaron en menos del tiempo mínimo
-     * configurado en Parámetros (ranking_minutos_minimos).
+     * consola, tienen aciertos, no se terminaron en menos del tiempo mínimo
+     * configurado en Parámetros (ranking_minutos_minimos) y su participante
+     * no fue sacado del ranking desde el dashboard.
      */
     private function enRanking()
     {
         return Partida::whereNotNull('codigo_final_en')
             ->where('aciertos', '>', 0)
-            ->where('segundos_jugados', '>=', $this->segundosMinimosRanking());
+            ->where('segundos_jugados', '>=', $this->segundosMinimosRanking())
+            ->whereHas('participante', fn ($p) => $p->where('en_ranking', true));
     }
 
     private function segundosMinimosRanking(): int
@@ -466,7 +464,8 @@ class Juego
     public function puestoDe(Partida $partida): ?int
     {
         if (! $partida->codigoIngresado() || $partida->aciertos < 1
-            || $partida->segundos_jugados < $this->segundosMinimosRanking()) {
+            || $partida->segundos_jugados < $this->segundosMinimosRanking()
+            || ! $partida->participante->en_ranking) {
             return null;
         }
 

@@ -63,6 +63,9 @@
                         @if (! $p->activo)
                             <span class="badge badge-muted">Inactivo</span>
                         @endif
+                        @if (! $p->en_ranking)
+                            <span class="badge badge-muted">Fuera del ranking</span>
+                        @endif
                         @if ($partida)
                             <span class="badge {{ $partida->estado === 'completada' ? 'badge-ok' : '' }}">
                                 {{ $partida->estado === 'completada' ? 'Completó' : 'En curso' }}
@@ -95,11 +98,22 @@
                         </div>
                     </div>
 
-                    <label class="mt-3 flex items-center gap-2.5">
-                        <input form="part-{{ $p->id }}" type="checkbox" name="activo" value="1" @checked($p->activo)
-                               class="h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
-                        <span class="text-[11.5px] text-muted">Puede entrar al juego</span>
-                    </label>
+                    {{-- Los ocultos envían 0 cuando la casilla queda desmarcada. --}}
+                    <input form="part-{{ $p->id }}" type="hidden" name="activo" value="0">
+                    <input form="part-{{ $p->id }}" type="hidden" name="en_ranking" value="0">
+
+                    <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+                        <label class="flex items-center gap-2.5">
+                            <input form="part-{{ $p->id }}" type="checkbox" name="activo" value="1" @checked($p->activo)
+                                   class="h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
+                            <span class="text-[11.5px] text-muted">Puede entrar al juego</span>
+                        </label>
+                        <label class="flex items-center gap-2.5">
+                            <input form="part-{{ $p->id }}" type="checkbox" name="en_ranking" value="1" @checked($p->en_ranking)
+                                   class="h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
+                            <span class="text-[11.5px] text-muted">Aparece en el ranking</span>
+                        </label>
+                    </div>
 
                     <div class="mt-3 flex flex-wrap items-center gap-2">
                         <button type="submit" form="part-{{ $p->id }}" class="btn btn-primary !w-auto !px-4 !py-2 !text-[12px]">Guardar</button>

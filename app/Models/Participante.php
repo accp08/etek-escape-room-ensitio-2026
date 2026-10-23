@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
-#[Fillable(['nombre', 'documento', 'area', 'correo', 'codigo_acceso', 'activo'])]
+#[Fillable(['nombre', 'documento', 'area', 'correo', 'codigo_acceso', 'activo', 'en_ranking'])]
 class Participante extends Model
 {
     protected $table = 'participantes';
@@ -18,7 +18,7 @@ class Participante extends Model
 
     protected function casts(): array
     {
-        return ['activo' => 'boolean', 'visto_en' => 'datetime'];
+        return ['activo' => 'boolean', 'en_ranking' => 'boolean', 'visto_en' => 'datetime'];
     }
 
     /** Cada participante nace con su propio fragmento para cada misión. */
