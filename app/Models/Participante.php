@@ -33,22 +33,6 @@ class Participante extends Model
         return Attribute::set(fn (?string $valor) => ($valor = mb_strtolower(trim((string) $valor))) !== '' ? $valor : null);
     }
 
-    /**
-     * La cédula es la contraseña. Se compara sin puntos, espacios ni guiones
-     * para que «1.020.304» y «1020304» sean lo mismo.
-     */
-    public static function normalizarDocumento(?string $documento): string
-    {
-        return mb_strtolower(preg_replace('/[^0-9A-Za-z]/', '', (string) $documento));
-    }
-
-    public function documentoCoincide(string $documento): bool
-    {
-        $esperado = self::normalizarDocumento($this->documento);
-
-        return $esperado !== '' && hash_equals($esperado, self::normalizarDocumento($documento));
-    }
-
     public function partidas(): HasMany
     {
         return $this->hasMany(Partida::class);
@@ -90,7 +74,7 @@ class Participante extends Model
 
     /**
      * Código interno del participante. Ya no se usa para entrar al juego
-     * (el acceso es correo + cédula), pero la columna sigue siendo obligatoria.
+     * (el acceso es solo con el correo), pero la columna sigue siendo obligatoria.
      * Se omiten caracteres que se confunden al dictarlos (O/0, I/1).
      */
     public static function generarCodigo(int $largo = 6): string

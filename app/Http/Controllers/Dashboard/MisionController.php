@@ -70,6 +70,7 @@ class MisionController extends Controller
         $datos['etiqueta'] = trim((string) ($datos['etiqueta'] ?? ''));
         $datos['jugable'] = $peticion->boolean('jugable');
         $datos['visible'] = $peticion->boolean('visible');
+        $datos['codigo_cualquier_orden'] = $peticion->boolean('codigo_cualquier_orden');
 
         $ordenSolicitado = (int) $datos['orden'];
 

@@ -1025,25 +1025,26 @@
     object-fit: contain;
 }
 
-/* El alto lo fija la placa; el ancho se ajusta a la proporción del logo. */
-.placa-sm { padding: 6px 10px;  border-radius: 9px; }
-.placa-sm img { height: 18px; }
+/* El alto lo fija la placa; el ancho se ajusta a la proporción del logo.
+   Poco relleno para que el logo, no el blanco, sea lo que se vea. */
+.placa-sm { padding: 4px 6px;   border-radius: 8px; }
+.placa-sm img { height: 26px; }
 
-.placa-md { padding: 9px 14px;  border-radius: 12px; }
-.placa-md img { height: 26px; }
+.placa-md { padding: 6px 9px;   border-radius: 11px; }
+.placa-md img { height: 40px; }
 
-.placa-lg { padding: 12px 18px; border-radius: 14px; }
-.placa-lg img { height: 34px; }
+.placa-lg { padding: 8px 12px;  border-radius: 14px; }
+.placa-lg img { height: 64px; }
 
 /* Dentro del certificado escala con el resto del diseño (unidades cqw). */
 .placa-cert {
-    padding: 1cqw 1.5cqw;
+    padding: 0.6cqw 0.9cqw;
     border-radius: 0.9cqw;
     border-width: 0.1cqw;
     box-shadow: 0 0 0 0.1cqw rgba(106, 92, 255, 0.22);
 }
 
-.placa-cert img { height: 3.4cqw; }
+.placa-cert img { height: 5cqw; }
 
 /* ==========================================================================
    Dashboard de administración
@@ -1650,9 +1651,10 @@
     gap: calc(var(--u) * 2);
 }
 
-.proy-marca { display: flex; align-items: center; gap: calc(var(--u) * 1.2); min-width: 0; }
-.proy-marca .placa-logo { padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9); border-radius: calc(var(--u) * 0.7); }
-.proy-marca .placa-logo img { height: calc(var(--u) * 2); }
+/* La marca va a la derecha (aunque no haya número de estación), con el logo en el borde. */
+.proy-marca { display: flex; align-items: center; gap: calc(var(--u) * 1.2); min-width: 0; margin-left: auto; text-align: right; }
+.proy-marca .placa-logo { padding: calc(var(--u) * 0.4) calc(var(--u) * 0.6); border-radius: calc(var(--u) * 0.8); }
+.proy-marca .placa-logo img { height: calc(var(--u) * 4.2); }
 
 .proy-juego {
     font-size: calc(var(--u) * 1.25);

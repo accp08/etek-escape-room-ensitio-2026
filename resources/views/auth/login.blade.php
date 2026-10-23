@@ -61,14 +61,6 @@
                        value="{{ old('correo') }}" maxlength="160" required autofocus>
             </div>
 
-            <div>
-                <label for="documento" class="field-label">{{ txt('login.campo_clave', 'Contraseña') }}</label>
-                <input id="documento" name="documento" type="password" inputmode="numeric"
-                       class="field" placeholder="••••••••" autocomplete="current-password"
-                       maxlength="40" required>
-                <p class="mt-1.5 text-[11px] text-muted">{{ txt('login.ayuda_clave', 'Tu contraseña es tu número de cédula, sin puntos.') }}</p>
-            </div>
-
             <button type="submit" class="btn btn-primary mt-2">
                 @include('partials.icono', ['n' => 'play', 'c' => 'w-4 h-4'])
                 {{ txt('login.boton', 'Iniciar protocolo') }}

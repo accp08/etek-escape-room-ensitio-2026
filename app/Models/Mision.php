@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
  */
 #[Fillable([
     'slug', 'titulo', 'etiqueta', 'icono', 'brief', 'instruccion',
-    'codigo_presencial', 'codigos_clasificacion', 'token_qr', 'audio_ruta', 'duracion', 'intentos', 'orden',
+    'codigo_presencial', 'codigos_clasificacion', 'codigo_cualquier_orden', 'token_qr', 'audio_ruta', 'duracion', 'intentos', 'orden',
     'jugable', 'visible',
 ])]
 class Mision extends Model
@@ -49,6 +49,7 @@ class Mision extends Model
     {
         return [
             'codigos_clasificacion' => 'array',
+            'codigo_cualquier_orden' => 'boolean',
             'jugable' => 'boolean',
             'visible' => 'boolean',
         ];
@@ -149,7 +150,8 @@ class Mision extends Model
     }
 
     /**
-     * Compara sin importar mayúsculas, espacios ni guiones. En la misión de
+     * Compara sin importar mayúsculas, espacios ni guiones (y, si la misión lo
+     * permite, sin importar el orden de los caracteres). En la misión de
      * clasificación recibe un arreglo nivel => código y exige los cuatro.
      *
      * @param  string|array<string, string|null>|null  $intento
@@ -168,7 +170,7 @@ class Mision extends Model
                     return false;
                 }
 
-                if (! hash_equals(self::normalizarCodigo($this->codigoDeNivel($nivel)), self::normalizarCodigo($escrito))) {
+                if (! $this->coincide($this->codigoDeNivel($nivel), $escrito)) {
                     return false;
                 }
             }
@@ -180,9 +182,33 @@ class Mision extends Model
             return false;
         }
 
-        $esperado = self::normalizarCodigo($this->codigo_presencial);
+        return $this->coincide($this->codigo_presencial, $intento);
+    }
 
-        return $esperado !== '' && hash_equals($esperado, self::normalizarCodigo($intento));
+    private function coincide(?string $esperado, ?string $escrito): bool
+    {
+        $esperado = $this->formaComparable($esperado);
+
+        return $esperado !== '' && hash_equals($esperado, $this->formaComparable($escrito));
+    }
+
+    /**
+     * Código normalizado; si se acepta en cualquier orden, con sus caracteres
+     * ordenados («321» y «213» quedan ambos como «123»). Se respeta cuántas
+     * veces aparece cada carácter: para «112» vale «121», pero no «122».
+     */
+    private function formaComparable(?string $codigo): string
+    {
+        $codigo = self::normalizarCodigo($codigo);
+
+        if (! $this->codigo_cualquier_orden) {
+            return $codigo;
+        }
+
+        $caracteres = mb_str_split($codigo);
+        sort($caracteres, SORT_STRING);
+
+        return implode('', $caracteres);
     }
 
     public static function normalizarCodigo(?string $codigo): string

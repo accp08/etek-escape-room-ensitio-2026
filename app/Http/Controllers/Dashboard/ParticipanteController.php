@@ -29,15 +29,14 @@ class ParticipanteController extends Controller
 
         $peticion->merge(['correo' => mb_strtolower(trim((string) $peticion->input('correo')))]);
 
-        // El correo es el usuario y la cédula la contraseña: ambos obligatorios y únicos.
+        // El correo es lo único con lo que se entra: obligatorio y único.
         $datos = $peticion->validate([
             'nombre' => ['required', 'string', 'max:120'],
-            'documento' => ['required', 'string', 'max:40', 'unique:participantes,documento'.($id ? ",{$id}" : '')],
             'area' => ['nullable', 'string', 'max:80'],
             'correo' => ['required', 'email', 'max:160', 'unique:participantes,correo'.($id ? ",{$id}" : '')],
         ], [
             'correo.unique' => 'Ya hay otro participante con ese correo.',
-        ], ['documento' => 'cédula', 'correo' => 'correo']);
+        ], ['correo' => 'correo']);
 
         $datos['activo'] = $peticion->boolean('activo', true);
 
@@ -47,11 +46,11 @@ class ParticipanteController extends Controller
         } else {
             $datos['codigo_acceso'] = Participante::generarCodigo();
             $participante = Participante::create($datos);
-            $mensaje = "Participante creado. Entra con {$participante->correo} y su cédula como contraseña.";
+            $mensaje = "Participante creado. Entra con {$participante->correo}.";
         }
 
         Bitacora::dashboard('participante.guardado', $mensaje, [
-            'documento' => $participante->documento,
+            'correo' => $participante->correo,
         ]);
 
         return back()->with('exito', $mensaje);
@@ -69,7 +68,7 @@ class ParticipanteController extends Controller
     public function borrar(Participante $participante): RedirectResponse
     {
         Bitacora::dashboard('participante.eliminado',
-            "Se eliminó a {$participante->nombre}", ['documento' => $participante->documento], 'aviso');
+            "Se eliminó a {$participante->nombre}", ['correo' => $participante->correo], 'aviso');
 
         $participante->delete();   // arrastra sus partidas (cascade)
 
@@ -118,8 +117,8 @@ class ParticipanteController extends Controller
     public function plantilla(): StreamedResponse
     {
         return $this->csv('plantilla-participantes.csv', [
-            ['Nombre', 'Documento', 'Área', 'Correo'],
-            ['Ana Pérez', '1020304050', 'Talento humano', 'ana.perez@empresa.com'],
+            ['Nombre', 'Área', 'Correo'],
+            ['Ana Pérez', 'Talento humano', 'ana.perez@empresa.com'],
         ]);
     }
 
@@ -127,11 +126,11 @@ class ParticipanteController extends Controller
     public function exportarParticipantes(): StreamedResponse
     {
         $filas = Participante::orderBy('nombre')->get()->map(fn ($p) => [
-            $p->nombre, $p->documento, $p->area, $p->correo, $p->activo ? 'Sí' : 'No',
+            $p->nombre, $p->area, $p->correo, $p->activo ? 'Sí' : 'No',
         ]);
 
         return $this->csv('participantes-'.now()->format('Y-m-d-Hi').'.csv', [
-            ['Nombre', 'Documento', 'Área', 'Correo', 'Activo'],
+            ['Nombre', 'Área', 'Correo', 'Activo'],
             ...$filas,
         ]);
     }
@@ -191,7 +190,7 @@ class ParticipanteController extends Controller
 
             fprintf($salida, "\xEF\xBB\xBF");   // BOM para que Excel lea las tildes
             fputcsv($salida, [
-                'Puesto', 'Participante', 'Documento', 'Área', 'Aciertos', 'Posibles', 'Tiempo',
+                'Puesto', 'Participante', 'Correo', 'Área', 'Aciertos', 'Posibles', 'Tiempo',
                 'Partida', 'Certificado', 'Descargado el', 'Nº de descargas',
             ]);
 
@@ -201,7 +200,7 @@ class ParticipanteController extends Controller
                 fputcsv($salida, [
                     $f['puesto'],
                     $f['nombre'],
-                    $partida->participante->documento,
+                    $partida->participante->correo,
                     $f['area'],
                     $f['aciertos'],
                     $f['total'],

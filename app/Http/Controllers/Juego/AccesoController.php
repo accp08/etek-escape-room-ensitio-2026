@@ -93,7 +93,6 @@ class AccesoController extends Controller
             ['correo' => $correo],
             [
                 'nombre' => trim((string) ($perfil['displayName'] ?? '')) ?: str($correo)->before('@')->toString(),
-                'documento' => 'OUTLOOK-'.strtoupper(substr(hash('sha256', $correo), 0, 32)),
                 'codigo_acceso' => Participante::generarCodigo(),
                 'activo' => true,
             ]
@@ -110,26 +109,24 @@ class AccesoController extends Controller
     {
         abort_unless((Ajuste::where('clave', 'metodo_acceso')->value('valor') ?? 'correo') === 'correo', 404);
 
-        // Usuario: correo. Contraseña: número de cédula.
+        // El participante entra solo con su correo.
         $datos = $peticion->validate([
             'correo' => ['required', 'string', 'max:160'],
-            'documento' => ['required', 'string', 'max:40'],
         ], [], [
             'correo' => 'correo',
-            'documento' => 'contraseña',
         ]);
 
         $participante = Participante::where('activo', true)
             ->where('correo', mb_strtolower(trim($datos['correo'])))
             ->first();
 
-        if (! $participante || ! $participante->documentoCoincide($datos['documento'])) {
+        if (! $participante) {
             Bitacora::juego('acceso.fallido', 'Intento de acceso fallido', [
                 'correo' => $datos['correo'],
             ], 'aviso');
 
             throw ValidationException::withMessages([
-                'correo' => 'El correo o la contraseña no son correctos. Recuerda: la contraseña es tu número de cédula.',
+                'correo' => 'No encontramos un participante habilitado con ese correo.',
             ]);
         }
 

@@ -188,11 +188,38 @@ class MisionesEnSitioTest extends TestCase
     {
         $this->get($this->urlQr())->assertRedirect(route('login'));
 
-        $this->post(route('acceso'), ['correo' => 'ana@empresa.com', 'documento' => '1020304050'])
+        $this->post(route('acceso'), ['correo' => 'ana@empresa.com'])
             ->assertRedirect($this->urlQr());
 
         $this->get($this->urlQr())->assertRedirect(route('mision.jugar', 'phishing'));
         $this->assertNotNull($this->avance()->iniciada_en);
+    }
+
+    public function test_con_la_opcion_activa_el_codigo_vale_en_cualquier_orden(): void
+    {
+        $this->mision->update(['codigo_presencial' => '123']);
+        $this->assertFalse($this->mision->codigoPresencialCoincide('321'));
+
+        $this->mision->update(['codigo_cualquier_orden' => true]);
+
+        foreach (['123', '132', '213', '231', '312', '3-2 1'] as $codigo) {
+            $this->assertTrue($this->mision->codigoPresencialCoincide($codigo), $codigo);
+        }
+
+        // Mismos caracteres, la misma cantidad de veces: ni más, ni menos, ni otros.
+        foreach (['12', '1233', '124', '', null] as $codigo) {
+            $this->assertFalse($this->mision->codigoPresencialCoincide($codigo), (string) $codigo);
+        }
+
+        $this->mision->update(['codigo_presencial' => '112']);
+        $this->assertTrue($this->mision->codigoPresencialCoincide('211'));
+        $this->assertFalse($this->mision->codigoPresencialCoincide('122'));
+
+        // De punta a punta: escanear y responder con el código desordenado.
+        $this->comoAna()->get($this->urlQr());
+        $this->comoAna()->post('/mision/phishing/responder', ['codigo' => '121'])
+            ->assertRedirect(route('mision.resultado', 'phishing'));
+        $this->assertTrue($this->avance()->superada());
     }
 
     public function test_el_dashboard_guarda_el_codigo_imprime_los_qr_y_puede_regenerarlos(): void
@@ -201,10 +228,11 @@ class MisionesEnSitioTest extends TestCase
 
         $this->put(route('dashboard.misiones.actualizar', $this->mision), [
             'titulo' => 'Phishing', 'icono' => 'mail', 'duracion' => 180, 'intentos' => 2, 'orden' => 0,
-            'codigo_presencial' => '  NUEVO1  ', 'jugable' => 1, 'visible' => 1,
+            'codigo_presencial' => '  NUEVO1  ', 'jugable' => 1, 'visible' => 1, 'codigo_cualquier_orden' => 1,
         ])->assertSessionHasNoErrors();
 
         $this->assertSame('NUEVO1', $this->mision->refresh()->codigo_presencial);
+        $this->assertTrue($this->mision->codigo_cualquier_orden);
 
         $this->get(route('dashboard.misiones.qr'))
             ->assertOk()

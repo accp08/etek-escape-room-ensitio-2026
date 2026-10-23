@@ -78,6 +78,7 @@ class ContenidoSeeder extends Seeder
         $valores = [
             'duracion_mision' => config('escape_room.duracion_mision', 180),
             'intentos_por_mision' => config('escape_room.intentos_por_mision', 2),
+            'ranking_minutos_minimos' => 0,
             'video_final' => config('escape_room.video_final', 'escape.mp4'),
             'juego_titulo' => config('escape_room.marca.titulo'),
             'juego_subtitulo' => config('escape_room.marca.subtitulo'),

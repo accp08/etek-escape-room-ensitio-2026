@@ -15,9 +15,9 @@ use App\Http\Middleware\ParticipanteAutenticado;
 |--------------------------------------------------------------------------
 | Ciberamenaza Inminente — Juego
 |--------------------------------------------------------------------------
-| El participante entra con su documento y el código que le entrega el
-| administrador. A partir de ahí todo el estado (cronómetro, intentos,
-| aciertos) lo lleva el servidor.
+| El participante entra con el correo que cargó el administrador. A partir
+| de ahí todo el estado (cronómetro, intentos, aciertos) lo lleva el
+| servidor.
 */
 
 use Illuminate\Support\Facades\Route;

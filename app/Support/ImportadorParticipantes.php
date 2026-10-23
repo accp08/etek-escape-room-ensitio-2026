@@ -13,19 +13,19 @@ use Illuminate\Support\Str;
  * Tolera lo que suele producir Excel en español: separador «;», codificación
  * Windows-1252 y BOM. Los encabezados se reconocen por nombre y sin importar
  * tildes ni mayúsculas; si el archivo no trae encabezados, las columnas se
- * leen en el orden de la plantilla: nombre, documento, área, correo.
+ * leen en el orden de la plantilla: nombre, área, correo.
  *
- * El correo es el usuario del juego y la cédula su contraseña, así que ambos
- * son obligatorios y no pueden repetirse.
+ * El correo es lo único con lo que se entra al juego: es obligatorio, no
+ * puede repetirse y es lo que identifica a un participante ya cargado. Una
+ * columna de cédula que venga en archivos viejos simplemente se ignora.
  */
 class ImportadorParticipantes
 {
-    public const COLUMNAS = ['nombre', 'documento', 'area', 'correo'];
+    public const COLUMNAS = ['nombre', 'area', 'correo'];
 
     /** Nombres de encabezado aceptados (ya normalizados) para cada columna. */
     private const ALIAS = [
         'nombre' => ['nombre', 'nombres', 'nombre completo', 'nombres y apellidos', 'participante'],
-        'documento' => ['documento', 'cedula', 'identificacion', 'numero de documento', 'no documento', 'doc', 'cc'],
         'area' => ['area', 'dependencia', 'departamento', 'cargo'],
         'correo' => ['correo', 'email', 'e-mail', 'correo electronico', 'mail'],
     ];
@@ -55,10 +55,9 @@ class ImportadorParticipantes
             return $reporte;
         }
 
-        $vistos = [];
         $correos = [];
 
-        DB::transaction(function () use ($filas, $mapa, $inicio, $actualizarExistentes, &$reporte, &$vistos, &$correos) {
+        DB::transaction(function () use ($filas, $mapa, $inicio, $actualizarExistentes, &$reporte, &$correos) {
             for ($i = $inicio; $i < count($filas); $i++) {
                 $linea = $i + 1;   // como la ve el usuario en Excel
                 $datos = [];
@@ -74,12 +73,11 @@ class ImportadorParticipantes
 
                 $validador = Validator::make($datos, [
                     'nombre' => ['required', 'string', 'max:120'],
-                    'documento' => ['required', 'string', 'max:40'],
                     'area' => ['nullable', 'string', 'max:80'],
                     'correo' => ['required', 'email', 'max:160'],
                 ], [
                     'correo.required' => 'Falta el correo: es el usuario con el que entra al juego.',
-                ], ['documento' => 'cédula', 'area' => 'área', 'correo' => 'correo']);
+                ], ['area' => 'área', 'correo' => 'correo']);
 
                 if ($validador->fails()) {
                     $reporte['errores'][$linea] = $validador->errors()->first();
@@ -87,13 +85,6 @@ class ImportadorParticipantes
                     continue;
                 }
 
-                $clave = mb_strtolower($datos['documento']);
-
-                if (isset($vistos[$clave])) {
-                    $reporte['errores'][$linea] = "El documento {$datos['documento']} está repetido en el archivo (fila {$vistos[$clave]}).";
-
-                    continue;
-                }
                 $datos['correo'] = mb_strtolower($datos['correo']);
 
                 if (isset($correos[$datos['correo']])) {
@@ -102,22 +93,11 @@ class ImportadorParticipantes
                     continue;
                 }
 
-                $vistos[$clave] = $linea;
                 $correos[$datos['correo']] = $linea;
 
                 $datos['area'] = $datos['area'] !== '' ? $datos['area'] : null;
 
-                $existente = Participante::whereRaw('LOWER(documento) = ?', [$clave])->first();
-
-                $otroConCorreo = Participante::where('correo', $datos['correo'])
-                    ->when($existente, fn ($q) => $q->whereKeyNot($existente->id))
-                    ->first();
-
-                if ($otroConCorreo && ($actualizarExistentes || ! $existente)) {
-                    $reporte['errores'][$linea] = "El correo {$datos['correo']} ya lo usa {$otroConCorreo->nombre} (cédula {$otroConCorreo->documento}).";
-
-                    continue;
-                }
+                $existente = Participante::where('correo', $datos['correo'])->first();
 
                 if ($existente) {
                     if ($actualizarExistentes) {
@@ -193,8 +173,8 @@ class ImportadorParticipantes
             }
         }
 
-        // Con nombre y documento reconocidos, la primera fila es el encabezado.
-        if (isset($mapa['nombre'], $mapa['documento'])) {
+        // Con nombre y correo reconocidos, la primera fila es el encabezado.
+        if (isset($mapa['nombre'], $mapa['correo'])) {
             return [$mapa, 1];
         }
 

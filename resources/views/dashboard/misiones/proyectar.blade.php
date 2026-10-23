@@ -27,18 +27,8 @@
         <span class="proy-orbe proy-orbe-rosa"></span>
     </div>
 
-    {{-- Cabecera: marca y número de estación --}}
+    {{-- Cabecera: número de estación a la izquierda, marca a la derecha --}}
     <header class="proy-cabecera">
-        <div class="proy-marca">
-            @include('partials.logo', ['tam' => 'md'])
-            <div>
-                <p class="proy-juego">{{ ajuste('juego_titulo', $marca['titulo'] ?? 'Ciberamenaza Inminente') }}</p>
-                @if ($sub = ajuste('juego_subtitulo'))
-                    <p class="proy-juego-sub">{{ $sub }}</p>
-                @endif
-            </div>
-        </div>
-
         @if ($numero)
             <div class="proy-estacion">
                 <span>{{ txt('proyeccion.estacion', 'Estación') }}</span>
@@ -46,6 +36,16 @@
                 <span class="proy-estacion-total">/ {{ str_pad($total, 2, '0', STR_PAD_LEFT) }}</span>
             </div>
         @endif
+
+        <div class="proy-marca">
+            <div>
+                <p class="proy-juego">{{ ajuste('juego_titulo', $marca['titulo'] ?? 'Ciberamenaza Inminente') }}</p>
+                @if ($sub = ajuste('juego_subtitulo'))
+                    <p class="proy-juego-sub">{{ $sub }}</p>
+                @endif
+            </div>
+            @include('partials.logo', ['tam' => 'md'])
+        </div>
     </header>
 
     <main class="proy-cuerpo">

@@ -21,39 +21,39 @@ class AccesoConCorreoTest extends TestCase
 
         $this->seed(ContenidoSeeder::class);
         $this->ana = Participante::create([
-            'nombre' => 'Ana', 'documento' => '1020304050', 'correo' => ' Ana.Perez@Empresa.com ', 'codigo_acceso' => 'ABC234',
+            'nombre' => 'Ana', 'correo' => ' Ana.Perez@Empresa.com ', 'codigo_acceso' => 'ABC234',
         ]);
     }
 
-    public function test_entra_con_su_correo_y_su_cedula_como_contrasena(): void
+    public function test_entra_solo_con_su_correo(): void
     {
         $this->assertSame('ana.perez@empresa.com', $this->ana->correo);
 
-        // Mayúsculas en el correo y puntos en la cédula no importan.
-        $this->post(route('acceso'), ['correo' => 'ANA.PEREZ@empresa.com', 'documento' => '1.020.304.050'])
+        // Las mayúsculas y los espacios en el correo no importan.
+        $this->post(route('acceso'), ['correo' => ' ANA.PEREZ@empresa.com '])
             ->assertRedirect(route('instrucciones'))
             ->assertSessionHas(ParticipanteAutenticado::CLAVE_SESION, $this->ana->id);
     }
 
-    public function test_rechaza_la_cedula_incorrecta_el_codigo_anterior_y_los_inactivos(): void
+    public function test_rechaza_correos_desconocidos_y_participantes_inactivos(): void
     {
-        foreach (['1020304051', 'ABC234'] as $clave) {
-            $this->post(route('acceso'), ['correo' => 'ana.perez@empresa.com', 'documento' => $clave])
-                ->assertSessionHasErrors('correo')
-                ->assertSessionMissing(ParticipanteAutenticado::CLAVE_SESION);
-        }
+        $this->post(route('acceso'), ['correo' => 'nadie@empresa.com'])
+            ->assertSessionHasErrors('correo')
+            ->assertSessionMissing(ParticipanteAutenticado::CLAVE_SESION);
 
         $this->ana->update(['activo' => false]);
 
-        $this->post(route('acceso'), ['correo' => 'ana.perez@empresa.com', 'documento' => '1020304050'])
-            ->assertSessionHasErrors('correo');
+        $this->post(route('acceso'), ['correo' => 'ana.perez@empresa.com'])
+            ->assertSessionHasErrors('correo')
+            ->assertSessionMissing(ParticipanteAutenticado::CLAVE_SESION);
     }
 
-    public function test_el_formulario_pide_correo_y_contrasena(): void
+    public function test_el_formulario_solo_pide_el_correo(): void
     {
         $this->get(route('login'))->assertOk()
             ->assertSee('name="correo"', false)
-            ->assertSee('type="password"', false)
+            ->assertDontSee('type="password"', false)
+            ->assertDontSee('name="documento"', false)
             ->assertDontSee('name="codigo"', false);
     }
 
@@ -61,13 +61,13 @@ class AccesoConCorreoTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        $this->post(route('dashboard.participantes.crear'), ['nombre' => 'Luis', 'documento' => '999'])
+        $this->post(route('dashboard.participantes.crear'), ['nombre' => 'Luis'])
             ->assertSessionHasErrors('correo');
 
-        $this->post(route('dashboard.participantes.crear'), ['nombre' => 'Luis', 'documento' => '999', 'correo' => 'ANA.PEREZ@empresa.com'])
+        $this->post(route('dashboard.participantes.crear'), ['nombre' => 'Luis', 'correo' => 'ANA.PEREZ@empresa.com'])
             ->assertSessionHasErrors('correo');
 
-        $this->post(route('dashboard.participantes.crear'), ['nombre' => 'Luis', 'documento' => '999', 'correo' => 'luis@empresa.com'])
+        $this->post(route('dashboard.participantes.crear'), ['nombre' => 'Luis', 'correo' => 'luis@empresa.com'])
             ->assertSessionHasNoErrors();
     }
 }

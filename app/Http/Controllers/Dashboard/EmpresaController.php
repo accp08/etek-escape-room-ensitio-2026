@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Empresa;
 use App\Support\Bitacora;
 use App\Support\Marca;
+use App\Support\RecorteLogo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -48,6 +49,9 @@ class EmpresaController extends Controller
 
             $empresa->logo_ruta = $peticion->file('logo')
                 ->storeAs('marca', $nombreArchivo, 'public');
+
+            // Sin el margen vacío, el logo llena la placa blanca.
+            RecorteLogo::recortar($empresa->logo_ruta);
 
             // Se borra el archivo reemplazado para no dejar basura en el disco.
             if ($anterior && $anterior !== $empresa->logo_ruta) {

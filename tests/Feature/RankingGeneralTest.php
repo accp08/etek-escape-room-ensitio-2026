@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\ParticipanteAutenticado;
+use App\Models\Ajuste;
 use App\Models\Mision;
 use App\Models\Participante;
 use App\Models\Partida;
 use App\Models\PartidaMision;
+use App\Services\Juego;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -83,5 +85,24 @@ class RankingGeneralTest extends TestCase
             ->get(route('ranking'))
             ->assertOk()
             ->assertSee('Jugador 60');
+    }
+
+    public function test_oculta_las_partidas_terminadas_en_menos_del_tiempo_minimo(): void
+    {
+        Ajuste::updateOrCreate(['clave' => 'ranking_minutos_minimos'], ['valor' => '5']);
+
+        $ana = $this->jugador('Ana Lenta', 'ana@etek.com', 5, 300, validado: true);
+        $beto = $this->jugador('Beto Rapido', 'beto@etek.com', 5, 299, validado: true);
+
+        $this->withSession([ParticipanteAutenticado::CLAVE_SESION => $ana->id])
+            ->get(route('ranking'))
+            ->assertOk()
+            ->assertSee('Ana Lenta')
+            ->assertDontSee('Beto Rapido');
+
+        $juego = app(Juego::class);
+        $this->assertSame(1, $juego->puestoDe($ana->partidaActual()));
+        $this->assertNull($juego->puestoDe($beto->partidaActual()));
+        $this->assertSame(1, $juego->totalRanking());
     }
 }

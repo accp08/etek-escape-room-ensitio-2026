@@ -142,6 +142,12 @@
                    class="h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
             <span class="text-[12px] text-ink-soft">Visible <span class="text-muted">(aparece en el centro de mando)</span></span>
         </label>
+
+        <label class="flex items-center gap-2.5">
+            <input type="checkbox" name="codigo_cualquier_orden" value="1" @checked(old('codigo_cualquier_orden', $mision->codigo_cualquier_orden))
+                   class="h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
+            <span class="text-[12px] text-ink-soft">Código en cualquier orden <span class="text-muted">(si es 123, también vale 213, 321…)</span></span>
+        </label>
     </div>
 
     <button type="submit" class="btn btn-primary mt-6">Guardar misión</button>

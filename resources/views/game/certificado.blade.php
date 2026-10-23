@@ -107,7 +107,7 @@
 
                 <div class="cert-folio">
                     Folio <strong>{{ $folio }}</strong><br>
-                    Documento <strong>{{ $participante->documento }}</strong>
+                    <strong>{{ $participante->correo }}</strong>
                 </div>
             </footer>
         </article>

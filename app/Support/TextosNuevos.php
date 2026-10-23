@@ -13,15 +13,13 @@ use Illuminate\Support\Facades\DB;
  */
 final class TextosNuevos
 {
-    /** Acceso con correo (usuario) y cédula (contraseña). */
+    /** Acceso solo con el correo. */
     public const LOGIN = [
         ['login', 'login.campo_correo', 'Correo electrónico',                        'Etiqueta del campo de usuario', false],
-        ['login', 'login.campo_clave',  'Contraseña',                                'Etiqueta del campo de contraseña', false],
-        ['login', 'login.ayuda_clave',  'Tu contraseña es tu número de cédula, sin puntos.', 'Ayuda bajo la contraseña', false],
     ];
 
-    /** Textos del acceso anterior (documento + código) que ya no se usan. */
-    public const RETIRADOS = ['login.campo_documento', 'login.campo_codigo'];
+    /** Textos de accesos anteriores (documento + código, correo + cédula) que ya no se usan. */
+    public const RETIRADOS = ['login.campo_documento', 'login.campo_codigo', 'login.campo_clave', 'login.ayuda_clave'];
 
     public const HUB = [
         ['hub', 'hub.instrucciones', 'Instrucciones del juego', 'Botón y título de la ventana de instrucciones del centro de mando', false],
@@ -111,6 +109,11 @@ final class TextosNuevos
         ['proyeccion', 'proyeccion.dato_fragmento', 'Fragmento del código',                       'Etiqueta del recuadro del fragmento', false],
     ];
 
+    /** Consola: la partida terminó en menos del tiempo mínimo del ranking. */
+    public const RANKING = [
+        ['consola', 'consola.fuera_ranking', 'Tu partida no entra en el ranking.', 'Mensaje al acertar si la partida no califica para el ranking (tiempo mínimo en Parámetros)', true],
+    ];
+
     public const CERTIFICADO = [
         ['certificado', 'certificado.texto_completo',
             'Por superar {misiones} del escape room de ciberseguridad, analizar las evidencias del incidente y recuperar el código {codigo} que permitió revertir el ataque antes de que se materializara.',
@@ -128,7 +131,7 @@ final class TextosNuevos
     /** @return array<int, array{0:string,1:string,2:string,3:string,4:bool}> */
     public static function todos(): array
     {
-        return [...self::LOGIN, ...self::HUB, ...self::MISION, ...self::PRESENCIAL, ...self::CONSOLA, ...self::PROYECCION, ...self::CERTIFICADO];
+        return [...self::LOGIN, ...self::HUB, ...self::MISION, ...self::PRESENCIAL, ...self::CONSOLA, ...self::PROYECCION, ...self::CERTIFICADO, ...self::RANKING];
     }
 
     /**

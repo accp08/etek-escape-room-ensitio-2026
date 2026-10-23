@@ -38,6 +38,16 @@
                     las demás, una sola vez. Cada misión puede tener su propio valor.
                 </p>
             </div>
+
+            <div>
+                <label class="field-label">Tiempo mínimo para el ranking (minutos)</label>
+                <input name="ranking_minutos_minimos" type="number" class="field" min="0" max="600"
+                       value="{{ $v('ranking_minutos_minimos', 0) }}" required>
+                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
+                    Quien termine el juego en menos de este tiempo no aparece en el ranking ni en el top.
+                    0 = sin mínimo.
+                </p>
+            </div>
         </div>
     </section>
 
@@ -53,6 +63,13 @@
             <div>
                 <label class="field-label">Subtítulo</label>
                 <input name="juego_subtitulo" class="field" maxlength="120" value="{{ $v('juego_subtitulo') }}">
+            </div>
+            <div>
+                <label class="field-label">Rótulo del centro de mando</label>
+                <input name="estado_ataque" class="field" maxlength="60" value="{{ old('estado_ataque', $estadoAtaque) }}" required>
+                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
+                    Etiqueta roja del panel superior, junto al avance de misiones (p. ej. «Ataque en curso»).
+                </p>
             </div>
             <div>
                 <label class="field-label">Video de cierre</label>
@@ -72,7 +89,7 @@
             <div>
                 <label for="metodo_acceso" class="field-label">¿Cómo ingresarán los participantes?</label>
                 <select id="metodo_acceso" name="metodo_acceso" class="field" required>
-                    <option value="correo" @selected($v('metodo_acceso', 'correo') === 'correo')>Correo y contraseña actual</option>
+                    <option value="correo" @selected($v('metodo_acceso', 'correo') === 'correo')>Solo correo electrónico</option>
                     <option value="outlook" @selected($v('metodo_acceso') === 'outlook')>Cuenta Microsoft Outlook</option>
                 </select>
                 <p class="mt-1.5 text-[11px] leading-relaxed text-muted">Con Outlook, cualquier cuenta de un dominio permitido puede ingresar. El sistema crea su participante automáticamente en el primer acceso.</p>

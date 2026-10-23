@@ -169,6 +169,7 @@
             'saludo' => txt('consola.exito_saludo', '¡Bien hecho, {nombre}!'),
             'top' => txt('consola.exito_top', '¡Entraste al TOP 10 en el puesto #{puesto}!'),
             'puesto' => txt('consola.exito_puesto', 'Vas en el puesto #{puesto} de {total}.'),
+            'fuera' => txt('consola.fuera_ranking', 'Tu partida no entra en el ranking.'),
             'repetido' => txt('consola.exito_repetido', 'Tu código ya estaba registrado. Vas en el puesto #{puesto} de {total}.'),
             'error' => txt('consola.error_texto', 'El código no es válido. Revisa tu celular e inténtalo de nuevo.'),
             'limite' => txt('consola.limite', 'Demasiados intentos seguidos. Espera un minuto e inténtalo de nuevo.'),

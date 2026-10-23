@@ -61,7 +61,7 @@ class ContenidoController extends Controller
     private const PESTANAS_TEXTOS = [
         'acceso' => ['titulo' => 'Acceso', 'icono' => 'user', 'pantallas' => [
             ['titulo' => 'Inicio de sesión', 'ruta' => '/', 'grupo' => 'login',
-                'ayuda' => 'Primera pantalla: el participante entra con documento y código.'],
+                'ayuda' => 'Primera pantalla: el participante entra con su correo.'],
             ['titulo' => 'Instrucciones', 'ruta' => '/instrucciones', 'grupo' => 'briefing',
                 'ayuda' => 'Briefing paso a paso. Los pasos se editan en Contenido › Instrucciones.'],
         ]],
@@ -157,10 +157,14 @@ class ContenidoController extends Controller
 
     /* ---------------- Parámetros ---------------- */
 
+    /** Rótulo del panel superior del centro de mando: es un texto, pero se edita también en Parámetros. */
+    private const TEXTO_ESTADO_ATAQUE = 'hub.estado_ataque';
+
     public function ajustes()
     {
         return view('dashboard.ajustes', [
             'ajustes' => Ajuste::orderBy('clave')->get()->keyBy('clave'),
+            'estadoAtaque' => Texto::where('clave', self::TEXTO_ESTADO_ATAQUE)->value('valor') ?? 'Ataque en curso',
         ]);
     }
 
@@ -169,12 +173,21 @@ class ContenidoController extends Controller
         $datos = $peticion->validate([
             'duracion_mision' => ['required', 'integer', 'min:30', 'max:3600'],
             'intentos_por_mision' => ['required', 'integer', 'min:0', 'max:99'],   // 0 = ilimitadas
+            'ranking_minutos_minimos' => ['required', 'integer', 'min:0', 'max:600'], // 0 = sin mínimo
             'juego_titulo' => ['required', 'string', 'max:80'],
             'juego_subtitulo' => ['nullable', 'string', 'max:120'],
             'video_final' => ['nullable', 'string', 'max:160'],
             'metodo_acceso' => ['required', 'in:correo,outlook'],
             'dominios_outlook' => ['nullable', 'string', 'max:2000'],
+            'estado_ataque' => ['required', 'string', 'max:60'],
+        ], [], ['estado_ataque' => 'rótulo del centro de mando']);
+
+        Texto::updateOrCreate(['clave' => self::TEXTO_ESTADO_ATAQUE], [
+            'grupo' => 'hub',
+            'valor' => trim($datos['estado_ataque']),
+            'descripcion' => 'Etiqueta del panel superior',
         ]);
+        unset($datos['estado_ataque']);
 
         if ($datos['metodo_acceso'] === 'outlook') {
             $dominios = preg_split('/[\s,;]+/', mb_strtolower(trim($datos['dominios_outlook'] ?? '')), -1, PREG_SPLIT_NO_EMPTY);

@@ -15,8 +15,7 @@
         </div>
 
         <p class="mt-2 text-[12.5px] leading-relaxed text-muted">
-            Cada persona entra al juego con su <strong class="text-ink-soft">correo</strong> como usuario
-            y su <strong class="text-ink-soft">número de cédula</strong> como contraseña.
+            Cada persona entra al juego solo con su <strong class="text-ink-soft">correo</strong>.
             @if ($participantes->isNotEmpty())
                 <a href="{{ route('dashboard.participantes.csv') }}" class="font-semibold text-cyan hover:underline">Descargar todos (CSV)</a>
             @endif
@@ -87,15 +86,11 @@
                             <input form="part-{{ $p->id }}" name="nombre" class="field" value="{{ $p->nombre }}" maxlength="120" required>
                         </div>
                         <div>
-                            <label class="field-label">Cédula <span class="font-normal normal-case tracking-normal">(contraseña)</span></label>
-                            <input form="part-{{ $p->id }}" name="documento" class="field" value="{{ $p->documento }}" maxlength="40" required>
-                        </div>
-                        <div>
                             <label class="field-label">Área</label>
                             <input form="part-{{ $p->id }}" name="area" class="field" value="{{ $p->area }}" maxlength="80">
                         </div>
                         <div>
-                            <label class="field-label">Correo <span class="font-normal normal-case tracking-normal">(usuario)</span></label>
+                            <label class="field-label">Correo</label>
                             <input form="part-{{ $p->id }}" name="correo" type="email" class="field" value="{{ $p->correo }}" maxlength="160" required>
                         </div>
                     </div>
@@ -131,7 +126,7 @@
     <aside class="panel h-fit p-5">
         <p class="eyebrow">Nuevo participante</p>
         <p class="mt-1.5 text-[11.5px] leading-relaxed text-muted">
-            Entrará con su correo como usuario y su cédula como contraseña.
+            Entrará al juego solo con su correo.
         </p>
 
         <form method="POST" action="{{ route('dashboard.participantes.crear') }}" class="mt-4 space-y-3">
@@ -142,15 +137,11 @@
                 <input name="nombre" class="field" maxlength="120" required>
             </div>
             <div>
-                <label class="field-label">Cédula <span class="font-normal normal-case tracking-normal">(contraseña)</span></label>
-                <input name="documento" class="field" maxlength="40" required>
-            </div>
-            <div>
                 <label class="field-label">Área</label>
                 <input name="area" class="field" maxlength="80">
             </div>
             <div>
-                <label class="field-label">Correo <span class="font-normal normal-case tracking-normal">(usuario)</span></label>
+                <label class="field-label">Correo</label>
                 <input name="correo" type="email" class="field" maxlength="160" required>
             </div>
 
@@ -160,8 +151,8 @@
         <div class="mt-6 border-t border-[rgba(46,91,140,.35)] pt-5">
             <p class="eyebrow">Carga masiva</p>
             <p class="mt-1.5 text-[11.5px] leading-relaxed text-muted">
-                Sube un archivo CSV con las columnas <strong class="text-ink-soft">Nombre, Documento, Área y Correo</strong>
-                (correo y documento obligatorios). Desde Excel: <em>Archivo → Guardar como → CSV</em>.
+                Sube un archivo CSV con las columnas <strong class="text-ink-soft">Nombre, Área y Correo</strong>
+                (nombre y correo obligatorios). Desde Excel: <em>Archivo → Guardar como → CSV</em>.
             </p>
             <a href="{{ route('dashboard.participantes.plantilla') }}"
                class="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-cyan hover:underline">
@@ -178,7 +169,7 @@
                     <input type="checkbox" name="actualizar" value="1"
                            class="mt-0.5 h-4 w-4 rounded border-[rgba(46,91,140,.7)] bg-[rgba(5,12,26,.85)] accent-[color:var(--color-cyan)]">
                     <span class="text-[11.5px] leading-snug text-muted">
-                        Actualizar los que ya existen <span class="text-muted">(se buscan por documento)</span>
+                        Actualizar los que ya existen <span class="text-muted">(se buscan por correo)</span>
                     </span>
                 </label>
 

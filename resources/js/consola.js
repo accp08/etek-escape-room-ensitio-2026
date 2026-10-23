@@ -248,7 +248,7 @@ export function iniciarConsola() {
         const mensaje = cuerpo.querySelector('[data-mensaje]');
         mensaje.dataset.top = datos.en_top ? 'si' : 'no';
         mensaje.textContent = plantilla(
-            datos.repetido ? textos.repetido : datos.en_top ? textos.top : textos.puesto,
+            ! datos.puesto ? (textos.fuera ?? '') : datos.repetido ? textos.repetido : datos.en_top ? textos.top : textos.puesto,
             { puesto: datos.puesto, total: datos.total },
         );
 

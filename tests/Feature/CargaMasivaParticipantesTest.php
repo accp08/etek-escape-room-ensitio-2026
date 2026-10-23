@@ -31,58 +31,65 @@ class CargaMasivaParticipantesTest extends TestCase
     {
         // Excel en español: separador «;», Windows-1252 y encabezados con tildes.
         $csv = mb_convert_encoding(
-            "Nombre;Cédula;Área;Correo\r\n"
-            ."José Núñez;1001;Compras;jose@empresa.com\r\n"
-            ."María Gómez;1002;;MARIA@empresa.com \r\n"
-            .";1003;TI;sin.nombre@empresa.com\r\n" // sin nombre
-            ."Repetido;1001;TI;otro@empresa.com\r\n" // documento repetido en el archivo
-            ."Mal correo;1004;TI;no-es-correo\r\n"
-            ."Sin correo;1005;TI;\r\n"            // el correo es el usuario: obligatorio
-            ."Correo repetido;1006;TI;jose@empresa.com\r\n"
-            .";;;\r\n",                            // fila vacía: se ignora
+            "Nombre;Área;Correo\r\n"
+            ."José Núñez;Compras;jose@empresa.com\r\n"
+            ."María Gómez;;MARIA@empresa.com \r\n"
+            .";TI;sin.nombre@empresa.com\r\n"     // sin nombre
+            ."Mal correo;TI;no-es-correo\r\n"
+            ."Sin correo;TI;\r\n"                // el correo es el usuario: obligatorio
+            ."Correo repetido;TI;jose@empresa.com\r\n"
+            .";;\r\n",
             'Windows-1252', 'UTF-8');
 
         $this->importar($csv)->assertRedirect()->assertSessionHas('importacion', function ($r) {
             return $r['creados'] === 2 && $r['omitidos'] === 0
-                && array_keys($r['errores']) === [4, 5, 6, 7, 8];
+                && array_keys($r['errores']) === [4, 5, 6, 7];
         });
 
-        $jose = Participante::where('documento', '1001')->firstOrFail();
+        $jose = Participante::where('correo', 'jose@empresa.com')->firstOrFail();
         $this->assertSame('José Núñez', $jose->nombre);
         $this->assertSame('Compras', $jose->area);
         $this->assertMatchesRegularExpression('/^[A-Z2-9]{6}$/', $jose->codigo_acceso);
         $this->assertTrue($jose->activo);
-        $this->assertNull(Participante::where('documento', '1002')->value('area'));
-        $this->assertSame('maria@empresa.com', Participante::where('documento', '1002')->value('correo'));
+        $this->assertNull($jose->documento);
+        $this->assertNull(Participante::where('correo', 'maria@empresa.com')->value('area'));
     }
 
     public function test_sin_encabezados_usa_el_orden_de_la_plantilla_y_respeta_los_existentes(): void
     {
-        $existente = Participante::create(['nombre' => 'Ana', 'documento' => 'A1', 'correo' => 'ana@empresa.com', 'codigo_acceso' => 'ABC234']);
+        $existente = Participante::create(['nombre' => 'Ana', 'correo' => 'ana@empresa.com', 'codigo_acceso' => 'ABC234']);
 
-        $this->importar("Ana Actualizada,a1,Legal,ana.nueva@empresa.com\nLuis,B2,TI,luis@empresa.com\n")
+        $this->importar("Ana Actualizada,Legal,ANA@empresa.com\nLuis,TI,luis@empresa.com\n")
             ->assertSessionHas('importacion', fn ($r) => $r['creados'] === 1 && $r['omitidos'] === 1);
 
         $this->assertSame('Ana', $existente->refresh()->nombre);
 
-        $this->importar("Ana Actualizada,a1,Legal,ana.nueva@empresa.com\n", actualizar: true)
+        $this->importar("Ana Actualizada,Legal,ana@empresa.com\n", actualizar: true)
             ->assertSessionHas('importacion', fn ($r) => $r['actualizados'] === 1);
 
         $existente->refresh();
         $this->assertSame('Ana Actualizada', $existente->nombre);
         $this->assertSame('Legal', $existente->area);
-        $this->assertSame('ana.nueva@empresa.com', $existente->correo);
+        $this->assertSame('ana@empresa.com', $existente->correo);
+    }
+
+    public function test_ignora_la_columna_de_cedula_de_archivos_anteriores(): void
+    {
+        $this->importar("Nombre;Cédula;Área;Correo\nLuis;1001;TI;luis@empresa.com\n")
+            ->assertSessionHas('importacion', fn ($r) => $r['creados'] === 1 && $r['errores'] === []);
+
+        $this->assertNull(Participante::where('correo', 'luis@empresa.com')->value('documento'));
     }
 
     public function test_la_plantilla_y_la_exportacion_se_descargan(): void
     {
-        Participante::create(['nombre' => 'Ana', 'documento' => 'A1', 'correo' => 'Ana@Empresa.com', 'codigo_acceso' => 'ABC234']);
+        Participante::create(['nombre' => 'Ana', 'correo' => 'Ana@Empresa.com', 'codigo_acceso' => 'ABC234']);
 
         $plantilla = $this->get(route('dashboard.participantes.plantilla'))->assertOk()->streamedContent();
-        $this->assertStringContainsString('Nombre;Documento;Área;Correo', $plantilla);
+        $this->assertStringContainsString('Nombre;Área;Correo', $plantilla);
 
         $exportado = $this->get(route('dashboard.participantes.csv'))->assertOk()->streamedContent();
-        $this->assertStringContainsString('Ana;A1;;ana@empresa.com;Sí', $exportado);
+        $this->assertStringContainsString('Ana;;ana@empresa.com;Sí', $exportado);
     }
 
     public function test_rechaza_archivos_que_no_son_csv(): void

@@ -12,9 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Sesión del participante del juego, independiente de la del dashboard.
  *
- * El acceso se valida con documento + código entregado por el administrador.
- * No es una credencial sensible (es un código de juego de un solo evento),
- * por eso se guarda en claro y el administrador puede consultarlo.
+ * El acceso se valida solo con el correo del participante, cargado
+ * previamente por el administrador (o con Outlook si así se configura).
  */
 class ParticipanteAutenticado
 {
