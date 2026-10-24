@@ -67,20 +67,38 @@
         </div>
 
         @if ($mision->pideCodigosPorNivel())
-            <div class="md:col-span-2">
+            @php
+                $filasCodigos = old('codigos_clasificacion', $mision->codigosDeLaEstacion()) ?: [['nombre' => '', 'codigo' => '']];
+            @endphp
+            <div class="md:col-span-2" data-codigos>
                 <label class="field-label">Códigos de la estación</label>
-                <div class="grid gap-3 sm:grid-cols-2">
-                    @foreach (\App\Models\Mision::NIVELES_CLASIFICACION as $nivel => $nombre)
-                        <div>
-                            <label for="codigo-{{ $nivel }}" class="mb-1 block text-[11px] font-semibold text-ink-soft">{{ $nombre }}</label>
-                            <input id="codigo-{{ $nivel }}" name="codigos_clasificacion[{{ $nivel }}]" class="field font-mono uppercase" maxlength="40" autocomplete="off"
-                                   value="{{ old('codigos_clasificacion.'.$nivel, $mision->codigoDeNivel($nivel)) }}" placeholder="Ej. 4F7K2">
+                <div class="space-y-2.5" data-codigos-lista>
+                    @foreach (array_values($filasCodigos) as $i => $fila)
+                        <div class="flex items-center gap-2" data-codigo-fila>
+                            <input name="codigos_clasificacion[{{ $i }}][nombre]" class="field min-w-0 flex-1" maxlength="40" autocomplete="off"
+                                   value="{{ $fila['nombre'] ?? '' }}" placeholder="Nombre (ej. Pública)" aria-label="Nombre del código">
+                            <input name="codigos_clasificacion[{{ $i }}][codigo]" class="field min-w-0 flex-1 font-mono uppercase" maxlength="40" autocomplete="off"
+                                   value="{{ $fila['codigo'] ?? '' }}" placeholder="Ej. 4F7K2" aria-label="Código">
+                            <button type="button" class="shrink-0 px-2 text-[11.5px] font-semibold text-muted hover:text-pink-soft" data-codigo-quitar>Quitar</button>
                         </div>
                     @endforeach
                 </div>
+
+                <template data-codigo-plantilla>
+                    <div class="flex items-center gap-2" data-codigo-fila>
+                        <input data-campo="nombre" class="field min-w-0 flex-1" maxlength="40" autocomplete="off" placeholder="Nombre (ej. Pública)" aria-label="Nombre del código">
+                        <input data-campo="codigo" class="field min-w-0 flex-1 font-mono uppercase" maxlength="40" autocomplete="off" placeholder="Ej. 4F7K2" aria-label="Código">
+                        <button type="button" class="shrink-0 px-2 text-[11.5px] font-semibold text-muted hover:text-pink-soft" data-codigo-quitar>Quitar</button>
+                    </div>
+                </template>
+
+                <button type="button" class="mt-2.5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-cyan hover:underline" data-codigo-agregar>
+                    + Agregar código
+                </button>
+
                 <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
-                    Uno por nivel de clasificación. El participante debe escribir los cuatro correctos para superar la misión.
-                    No distinguen mayúsculas, espacios ni guiones. Si falta alguno, nadie puede superarla.
+                    El participante debe escribir todos los códigos correctos para superar la misión; en el celular solo aparecen los que tienen código.
+                    No distinguen mayúsculas, espacios ni guiones. Sin ningún código, nadie puede superarla.
                 </p>
             </div>
         @else
@@ -190,4 +208,32 @@
         </div>
     </div>
 </section>
+<script>
+    // Códigos de la estación: agregar y quitar filas. Los índices se renumeran para que lleguen en orden.
+    document.querySelectorAll('[data-codigos]').forEach((bloque) => {
+        const lista = bloque.querySelector('[data-codigos-lista]');
+        const plantilla = bloque.querySelector('[data-codigo-plantilla]');
+
+        const renumerar = () => {
+            lista.querySelectorAll('[data-codigo-fila]').forEach((fila, i) => {
+                const [nombre, codigo] = fila.querySelectorAll('input');
+                nombre.name = `codigos_clasificacion[${i}][nombre]`;
+                codigo.name = `codigos_clasificacion[${i}][codigo]`;
+            });
+        };
+
+        bloque.querySelector('[data-codigo-agregar]').addEventListener('click', () => {
+            lista.append(plantilla.content.cloneNode(true));
+            renumerar();
+            lista.lastElementChild.querySelector('input').focus();
+        });
+
+        lista.addEventListener('click', (evento) => {
+            if (!evento.target.closest('[data-codigo-quitar]')) return;
+
+            evento.target.closest('[data-codigo-fila]').remove();
+            renumerar();
+        });
+    });
+</script>
 @endsection

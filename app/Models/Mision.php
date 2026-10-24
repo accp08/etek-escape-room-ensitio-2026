@@ -24,16 +24,8 @@ class Mision extends Model
     /** Cada misión vale un acierto: superarla. */
     public const ACIERTOS_POSIBLES = 1;
 
-    /** Misión de clasificación de la información: pide un código por nivel. */
+    /** Misión 3, clasificación de la información: pide varios códigos con nombre. */
     public const SLUG_CLASIFICACION = 'clasificacion';
-
-    /** Niveles de clasificación, en el orden en que se piden. */
-    public const NIVELES_CLASIFICACION = [
-        'publica' => 'Pública',
-        'interna' => 'Interna',
-        'reservada' => 'Reservada',
-        'confidencial' => 'Confidencial',
-    ];
 
     /** Los códigos de la estación y el token del QR nunca se serializan hacia el cliente. */
     protected $hidden = ['codigo_presencial', 'codigos_clasificacion', 'token_qr'];
@@ -121,40 +113,50 @@ class Mision extends Model
 
     /* ---------------- Código de la estación ---------------- */
 
-    /** La misión de clasificación pide cuatro códigos, uno por nivel, en lugar de uno solo. */
+    /** Solo la misión de clasificación pide varios códigos con nombre en lugar de uno solo. */
     public function pideCodigosPorNivel(): bool
     {
         return $this->slug === self::SLUG_CLASIFICACION;
     }
 
-    /** Código esperado para un nivel de clasificación, o null si no se ha fijado. */
-    public function codigoDeNivel(string $nivel): ?string
+    /**
+     * Códigos de la estación con su nombre, en el orden en que se piden. Los
+     * que no tienen código no cuentan: ni se piden ni se exigen.
+     *
+     * @return array<int, array{nombre: string, codigo: string}>
+     */
+    public function codigosDeLaEstacion(): array
     {
-        return ($this->codigos_clasificacion ?? [])[$nivel] ?? null;
+        $codigos = [];
+
+        foreach ($this->codigos_clasificacion ?? [] as $codigo) {
+            if (is_array($codigo) && self::normalizarCodigo($codigo['codigo'] ?? null) !== '') {
+                $codigos[] = [
+                    'nombre' => trim((string) ($codigo['nombre'] ?? '')) ?: 'Código '.(count($codigos) + 1),
+                    'codigo' => (string) $codigo['codigo'],
+                ];
+            }
+        }
+
+        return $codigos;
     }
 
-    /** Sin código (o sin alguno de los cuatro niveles), nadie puede superar la misión. */
+    /** Sin código (o, en la misión de clasificación, sin ninguno), nadie puede superar la misión. */
     public function tieneCodigo(): bool
     {
         if (! $this->pideCodigosPorNivel()) {
             return self::normalizarCodigo($this->codigo_presencial) !== '';
         }
 
-        foreach (array_keys(self::NIVELES_CLASIFICACION) as $nivel) {
-            if (self::normalizarCodigo($this->codigoDeNivel($nivel)) === '') {
-                return false;
-            }
-        }
-
-        return true;
+        return $this->codigosDeLaEstacion() !== [];
     }
 
     /**
      * Compara sin importar mayúsculas, espacios ni guiones (y, si la misión lo
      * permite, sin importar el orden de los caracteres). En la misión de
-     * clasificación recibe un arreglo nivel => código y exige los cuatro.
+     * clasificación recibe un arreglo posición => código y exige todos.
      *
-     * @param  string|array<string, string|null>|null  $intento
+     * @param  string|array<int, string|null>|null  $intento
      */
     public function codigoPresencialCoincide(string|array|null $intento): bool
     {
@@ -163,14 +165,14 @@ class Mision extends Model
                 return false;
             }
 
-            foreach (array_keys(self::NIVELES_CLASIFICACION) as $nivel) {
-                $escrito = $intento[$nivel] ?? null;
+            foreach ($this->codigosDeLaEstacion() as $posicion => $codigo) {
+                $escrito = $intento[$posicion] ?? null;
 
                 if (! is_string($escrito) && $escrito !== null) {
                     return false;
                 }
 
-                if (! $this->coincide($this->codigoDeNivel($nivel), $escrito)) {
+                if (! $this->coincide($codigo['codigo'], $escrito)) {
                     return false;
                 }
             }

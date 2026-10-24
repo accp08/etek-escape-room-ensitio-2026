@@ -154,7 +154,7 @@ class PartidaController extends Controller
             return redirect()->route('mision', $mision->slug);
         }
 
-        // La misión de clasificación envía un código por nivel; las demás, uno solo.
+        // La misión de clasificación envía varios códigos; las demás, uno solo.
         if ($mision->pideCodigosPorNivel()) {
             $peticion->validate([
                 'codigo' => ['nullable', 'array'],
@@ -162,11 +162,11 @@ class PartidaController extends Controller
             ]);
 
             $codigo = [];
-            foreach (array_keys(Mision::NIVELES_CLASIFICACION) as $nivel) {
-                $codigo[$nivel] = (string) $peticion->input("codigo.{$nivel}", '');
+            foreach (array_keys($mision->codigosDeLaEstacion()) as $posicion) {
+                $codigo[$posicion] = (string) $peticion->input("codigo.{$posicion}", '');
             }
             $vacio = collect($codigo)->contains(fn (string $c): bool => blank($c));
-            $aviso = 'Escribe los cuatro códigos que obtuviste en la estación.';
+            $aviso = 'Escribe todos los códigos que obtuviste en la estación.';
         } else {
             $peticion->validate(['codigo' => ['nullable', 'string', 'max:60']]);
 

@@ -39,8 +39,9 @@ class MisionController extends Controller
             'intentos' => ['required', 'integer', 'min:0', 'max:99'],   // 0 = ilimitadas
             'orden' => ['required', 'integer', 'min:0', 'max:99'],
             'codigo_presencial' => ['nullable', 'string', 'max:40'],   // lo entrega la estación física
-            'codigos_clasificacion' => ['nullable', 'array'],          // misión de clasificación: uno por nivel
-            'codigos_clasificacion.*' => ['nullable', 'string', 'max:40'],
+            'codigos_clasificacion' => ['nullable', 'array', 'max:20'],   // misión de clasificación: varios con nombre
+            'codigos_clasificacion.*.nombre' => ['nullable', 'string', 'max:40'],
+            'codigos_clasificacion.*.codigo' => ['nullable', 'string', 'max:40'],
             'audio' => Audio::reglas(),   // suena en la pantalla de proyección
         ], Audio::mensajes('audio'));
 
@@ -56,11 +57,15 @@ class MisionController extends Controller
         $datos['codigo_presencial'] = trim((string) ($datos['codigo_presencial'] ?? '')) ?: null;
 
         if ($mision->pideCodigosPorNivel()) {
-            $codigos = [];
-            foreach (array_keys(Mision::NIVELES_CLASIFICACION) as $nivel) {
-                $codigos[$nivel] = trim((string) ($datos['codigos_clasificacion'][$nivel] ?? '')) ?: null;
-            }
-            $datos['codigos_clasificacion'] = $codigos;
+            // Las filas sin código se descartan: así se quitan.
+            $datos['codigos_clasificacion'] = collect($datos['codigos_clasificacion'] ?? [])
+                ->map(fn ($fila): array => [
+                    'nombre' => trim((string) ($fila['nombre'] ?? '')),
+                    'codigo' => trim((string) ($fila['codigo'] ?? '')),
+                ])
+                ->filter(fn (array $fila): bool => $fila['codigo'] !== '')
+                ->values()
+                ->all();
         } else {
             unset($datos['codigos_clasificacion']);
         }

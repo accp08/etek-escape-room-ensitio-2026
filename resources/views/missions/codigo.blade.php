@@ -25,14 +25,14 @@
 
     <div class="panel anim-in mt-7 p-5" style="--i:4">
         @if ($mision->pideCodigosPorNivel())
-            {{-- Misión de clasificación: un código por nivel. --}}
+            {{-- Misión de clasificación: solo se piden los códigos configurados. --}}
             <div class="space-y-4">
-                @foreach (\App\Models\Mision::NIVELES_CLASIFICACION as $nivel => $nombre)
+                @foreach ($mision->codigosDeLaEstacion() as $posicion => $codigo)
                     <div>
-                        <label for="codigo-{{ $nivel }}" class="field-label">{{ $nombre }}</label>
-                        <input id="codigo-{{ $nivel }}" name="codigo[{{ $nivel }}]" class="field mt-1 text-center font-mono text-xl font-extrabold uppercase tracking-[.25em]"
+                        <label for="codigo-{{ $posicion }}" class="field-label">{{ $codigo['nombre'] }}</label>
+                        <input id="codigo-{{ $posicion }}" name="codigo[{{ $posicion }}]" class="field mt-1 text-center font-mono text-xl font-extrabold uppercase tracking-[.25em]"
                                maxlength="60" autocapitalize="characters" autocorrect="off" spellcheck="false"
-                               value="{{ old('codigo.'.$nivel) }}" placeholder="· · · ·" @if ($loop->first) autofocus @endif>
+                               value="{{ old('codigo.'.$posicion) }}" placeholder="· · · ·" @if ($loop->first) autofocus @endif>
                     </div>
                 @endforeach
             </div>
