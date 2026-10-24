@@ -1,4 +1,4 @@
-{{-- Consola de recuperación: pantalla pública que se proyecta en la sala.
+{{-- Consola de detención: pantalla pública que se proyecta en la sala.
      Izquierda: el jugador digita con el teclado el código que ve en su
      celular. Derecha: el top 10 en vivo. El código identifica al jugador, así
      que no hay que iniciar sesión.
@@ -11,7 +11,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
-    <title>{{ txt('consola.titulo', 'Consola de recuperación') }}</title>
+    <title>{{ txt('consola.titulo', 'Consola de detención') }}</title>
     <link rel="icon" href="{{ asset('icons/icon-192.png') }}" type="image/png">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900|jetbrains-mono:400,700,800" rel="stylesheet">
@@ -62,13 +62,13 @@
                 <div class="cons-ventana-cuerpo">
                     {{-- Espera: digitar --}}
                     <div class="cons-vista cons-vista-espera">
-                        <p class="proy-rotulo">{{ txt('consola.titulo', 'Consola de recuperación') }}</p>
-                        <h1 class="cons-instruccion">{{ txt('consola.instruccion', 'Digita el código de recuperación que aparece en tu celular') }}</h1>
+                        <p class="proy-rotulo">{{ txt('consola.titulo', 'Consola de detención') }}</p>
+                        <h1 class="cons-instruccion">{{ txt('consola.instruccion', 'Digita el código de detención que aparece en tu celular') }}</h1>
 
                         <label class="cons-casillas" data-casillas>
                             <input type="text" class="cons-entrada" data-entrada
                                    maxlength="{{ $misiones * $largo }}" autocomplete="off" autocapitalize="characters"
-                                   autocorrect="off" spellcheck="false" autofocus aria-label="Código de recuperación">
+                                   autocorrect="off" spellcheck="false" autofocus aria-label="Código de detención">
 
                             @for ($m = 0; $m < $misiones; $m++)
                                 <span class="cons-grupo">
@@ -89,7 +89,7 @@
 
                         <button type="button" class="cons-boton" data-enviar>
                             @include('partials.icono', ['n' => 'lock', 'c' => 'w-[1.2em] h-[1.2em]'])
-                            {{ txt('consola.boton', 'Ejecutar recuperación') }}
+                            {{ txt('consola.boton', 'Ejecutar detención') }}
                         </button>
                     </div>
 
