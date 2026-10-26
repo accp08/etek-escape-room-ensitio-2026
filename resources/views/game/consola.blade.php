@@ -32,20 +32,21 @@
     {{-- Confeti (código correcto) --}}
     <canvas class="cons-confeti" data-confeti aria-hidden="true"></canvas>
 
+    {{-- Cabecera: estado del sistema a la izquierda, marca a la derecha --}}
     <header class="proy-cabecera">
+        <div class="cons-estado-sistema">
+            <span class="cons-punto"></span>
+            {{ txt('consola.estado_sistema', 'Sistemas cifrados · esperando código') }}
+        </div>
+
         <div class="proy-marca">
-            @include('partials.logo', ['tam' => 'md'])
             <div>
                 <p class="proy-juego">{{ ajuste('juego_titulo', $marca['titulo'] ?? 'Ciberamenaza Inminente') }}</p>
                 @if ($sub = ajuste('juego_subtitulo'))
                     <p class="proy-juego-sub">{{ $sub }}</p>
                 @endif
             </div>
-        </div>
-
-        <div class="cons-estado-sistema">
-            <span class="cons-punto"></span>
-            {{ txt('consola.estado_sistema', 'Sistemas cifrados · esperando código') }}
+            @include('partials.logo', ['tam' => 'md'])
         </div>
     </header>
 
