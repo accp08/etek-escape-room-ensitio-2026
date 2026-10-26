@@ -63,7 +63,7 @@
             <table class="w-full border-collapse text-left">
                 <thead>
                     <tr class="bg-[rgba(5,12,26,.7)]">
-                        @foreach (['#', 'Participante', 'Área', 'Aciertos', 'Tiempo', 'Estado', 'Certificado'] as $th)
+                        @foreach (['#', 'Participante', 'Correo', 'Área', 'Aciertos', 'Tiempo', 'Estado', 'Certificado'] as $th)
                             <th class="whitespace-nowrap px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted">{{ $th }}</th>
                         @endforeach
                     </tr>
@@ -73,6 +73,7 @@
                         <tr class="border-t border-[rgba(46,91,140,.28)]">
                             <td class="px-3 py-2.5 font-mono text-[12px] font-black text-cyan">{{ $f['puesto'] }}</td>
                             <td class="px-3 py-2.5 text-[12.5px] font-bold text-ink">{{ $f['nombre'] }}</td>
+                            <td class="px-3 py-2.5 text-[11.5px] text-muted">{{ $f['partida']->participante->correo }}</td>
                             <td class="px-3 py-2.5 text-[11.5px] text-muted">{{ $f['area'] }}</td>
                             <td class="px-3 py-2.5 font-mono text-[12px] text-ink-soft">{{ $f['aciertos'] }}/{{ $f['total'] }}</td>
                             <td class="px-3 py-2.5 font-mono text-[12px] text-muted-2">{{ $f['tiempo'] }}</td>

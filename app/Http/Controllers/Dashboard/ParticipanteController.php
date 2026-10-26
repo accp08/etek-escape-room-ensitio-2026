@@ -193,7 +193,7 @@ class ParticipanteController extends Controller
             fputcsv($salida, [
                 'Puesto', 'Participante', 'Correo', 'Área', 'Aciertos', 'Posibles', 'Tiempo',
                 'Partida', 'Certificado', 'Descargado el', 'Nº de descargas',
-            ]);
+            ], ';', '"', '');
 
             foreach ($filas as $f) {
                 $partida = $f['partida'];
@@ -214,7 +214,7 @@ class ParticipanteController extends Controller
                     },
                     $partida->certificado_descargado_en?->format('d/m/Y H:i') ?? '',
                     $partida->certificado_descargas,
-                ]);
+                ], ';', '"', '');
             }
 
             fclose($salida);
