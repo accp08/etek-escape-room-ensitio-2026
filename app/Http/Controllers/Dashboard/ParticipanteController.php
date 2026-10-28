@@ -9,8 +9,10 @@ use App\Models\Partida;
 use App\Services\Juego;
 use App\Support\Bitacora;
 use App\Support\ImportadorParticipantes;
+use App\Support\Xlsx;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ParticipanteController extends Controller
@@ -91,17 +93,24 @@ class ParticipanteController extends Controller
 
     public function importar(Request $peticion, ImportadorParticipantes $importador): RedirectResponse
     {
+        // Un .xlsx es un ZIP: según el servidor se detecta con uno u otro tipo.
         $peticion->validate([
-            'archivo' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+            'archivo' => ['required', 'file', 'extensions:xlsx,csv,txt', 'mimes:xlsx,zip,csv,txt', 'max:5120'],
         ], [
-            'archivo.required' => 'Selecciona el archivo CSV con los participantes.',
-            'archivo.mimes' => 'El archivo debe ser CSV. En Excel: Archivo → Guardar como → CSV UTF-8.',
-            'archivo.max' => 'El archivo no puede pesar más de 2 MB.',
+            'archivo.required' => 'Selecciona el archivo de Excel (.xlsx) o CSV con los participantes.',
+            'archivo.extensions' => 'El archivo debe ser Excel (.xlsx) o CSV. Si es un .xls viejo: Archivo → Guardar como → Libro de Excel (.xlsx).',
+            'archivo.mimes' => 'El archivo debe ser Excel (.xlsx) o CSV. Si es un .xls viejo: Archivo → Guardar como → Libro de Excel (.xlsx).',
+            'archivo.max' => 'El archivo no puede pesar más de 5 MB.',
             'archivo.uploaded' => 'El archivo no se pudo subir: supera el límite del servidor.',
         ]);
 
+        // Cada participante nuevo genera sus fragmentos: 2.000 filas tardan más que el límite por defecto.
+        @set_time_limit(300);
+
+        $archivo = $peticion->file('archivo');
+
         $reporte = $importador->importar(
-            (string) file_get_contents($peticion->file('archivo')->getRealPath()),
+            $importador->leerArchivo($archivo->getRealPath(), $archivo->getClientOriginalExtension()),
             $peticion->boolean('actualizar'),
         );
 
@@ -114,12 +123,56 @@ class ParticipanteController extends Controller
         return back()->with('importacion', $reporte);
     }
 
-    /** Plantilla vacía para la carga masiva. */
-    public function plantilla(): StreamedResponse
+    /**
+     * Plantilla de Excel para la carga masiva: la hoja Participantes trae solo
+     * los encabezados (para no cargar ejemplos por error) y listas Sí/No en las
+     * dos casillas; los ejemplos y las reglas van en la hoja Instrucciones.
+     */
+    public function plantilla(): Response
     {
-        return $this->csv('plantilla-participantes.csv', [
-            ['Nombre', 'Área', 'Correo'],
-            ['Ana Pérez', 'Talento humano', 'ana.perez@empresa.com'],
+        $filas = ImportadorParticipantes::MAXIMO_FILAS + 1;
+        $ayuda = 'Sí o No. Vacío = Sí para los nuevos; a los existentes no se les cambia.';
+
+        $contenido = Xlsx::escribir([
+            [
+                'nombre' => 'Participantes',
+                'encabezado' => true,
+                'anchos' => [34, 24, 38, 12, 14],
+                'filas' => [['Nombre', 'Área', 'Correo', 'Activo', 'En ranking']],
+                'listas' => [
+                    "D2:D{$filas}" => ['valores' => ['Sí', 'No'], 'ayuda' => 'Activo: '.$ayuda],
+                    "E2:E{$filas}" => ['valores' => ['Sí', 'No'], 'ayuda' => 'En ranking: '.$ayuda],
+                ],
+            ],
+            [
+                'nombre' => 'Instrucciones',
+                'encabezado' => true,
+                'anchos' => [16, 14, 90],
+                'filas' => [
+                    ['Columna', '¿Obligatoria?', 'Qué poner'],
+                    ['Nombre', 'Sí', 'Nombre completo del participante (máx. 120 caracteres).'],
+                    ['Área', 'No', 'Área o dependencia (máx. 80 caracteres).'],
+                    ['Correo', 'Sí', 'Es el usuario con el que entra al juego. No puede repetirse.'],
+                    ['Activo', 'No', 'Sí: puede entrar a jugar. No: queda bloqueado. Vacío: Sí para los nuevos; a los existentes no se les cambia.'],
+                    ['En ranking', 'No', 'Sí: aparece en el ranking y en el top. No: juega pero no sale en el ranking. Vacío: igual que Activo.'],
+                    [],
+                    ['Reglas'],
+                    ['', '', 'Llena la hoja Participantes desde la fila 2, una persona por fila. No cambies los encabezados.'],
+                    ['', '', 'Máximo '.number_format(ImportadorParticipantes::MAXIMO_FILAS, 0, ',', '.').' filas por archivo.'],
+                    ['', '', 'Los correos que ya existen se omiten, salvo que marques «Actualizar los que ya existen» al importar.'],
+                    ['', '', 'Las filas con error no se cargan y se listan al final con su número de fila; el resto sí se carga.'],
+                    [],
+                    ['Ejemplo (no lo copies a la hoja Participantes)'],
+                    ['Nombre', 'Área', 'Correo · Activo · En ranking'],
+                    ['Ana Pérez', 'Talento humano', 'ana.perez@empresa.com · Sí · Sí'],
+                    ['Luis Gómez', 'Gerencia', 'luis.gomez@empresa.com · Sí · No   (juega, pero no sale en el ranking)'],
+                ],
+            ],
+        ]);
+
+        return response($contenido, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="plantilla-participantes.xlsx"',
         ]);
     }
 

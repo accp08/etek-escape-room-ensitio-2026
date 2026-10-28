@@ -165,18 +165,20 @@
         <div class="mt-6 border-t border-[rgba(46,91,140,.35)] pt-5">
             <p class="eyebrow">Carga masiva</p>
             <p class="mt-1.5 text-[11.5px] leading-relaxed text-muted">
-                Sube un archivo CSV con las columnas <strong class="text-ink-soft">Nombre, Área y Correo</strong>
-                (nombre y correo obligatorios). Desde Excel: <em>Archivo → Guardar como → CSV</em>.
+                Sube un Excel (.xlsx) o CSV con las columnas <strong class="text-ink-soft">Nombre, Área, Correo,
+                Activo y En ranking</strong>. Nombre y correo son obligatorios; Activo y En ranking van con
+                <strong class="text-ink-soft">Sí</strong> o <strong class="text-ink-soft">No</strong>
+                (vacías quedan en Sí). Hasta {{ number_format(\App\Support\ImportadorParticipantes::MAXIMO_FILAS, 0, ',', '.') }} filas.
             </p>
             <a href="{{ route('dashboard.participantes.plantilla') }}"
                class="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-cyan hover:underline">
                 @include('partials.icono', ['n' => 'download', 'c' => 'w-3.5 h-3.5'])
-                Descargar plantilla
+                Descargar plantilla (Excel)
             </a>
 
             <form method="POST" action="{{ route('dashboard.participantes.importar') }}" enctype="multipart/form-data" class="mt-4 space-y-3">
                 @csrf
-                <input type="file" name="archivo" accept=".csv,text/csv,text/plain" required
+                <input type="file" name="archivo" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" required
                        class="block w-full text-[11.5px] text-muted file:mr-3 file:rounded-lg file:border file:border-[rgba(46,91,140,.6)] file:bg-[rgba(5,12,26,.85)] file:px-3 file:py-2 file:text-[11.5px] file:font-semibold file:text-ink-soft hover:file:text-cyan">
 
                 <label class="flex items-start gap-2.5">
