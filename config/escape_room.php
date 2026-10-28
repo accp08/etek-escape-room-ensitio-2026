@@ -25,9 +25,9 @@ return [
 
     // Caracteres del fragmento que gana cada participante por misión. Cada
     // jugador tiene fragmentos propios, así que no son intercambiables.
-    // Con 2 caracteres hay 1.024 fragmentos distintos por misión: ese es el
-    // máximo de participantes. Con 3 serían 32.768.
-    'largo_fragmento' => 2,
+    // Con 3 caracteres hay 32.768 fragmentos distintos por misión: ese es el
+    // máximo de participantes (con 2 eran 1.024, no alcanzaba para 2.000).
+    'largo_fragmento' => 3,
 
     /*
     |----------------------------------------------------------------------

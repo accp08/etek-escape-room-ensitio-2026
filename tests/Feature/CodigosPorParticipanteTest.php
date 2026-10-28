@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CodigoMision;
 use App\Models\Mision;
 use App\Models\Participante;
 use App\Services\Juego;
@@ -63,7 +64,7 @@ class CodigosPorParticipanteTest extends TestCase
         $beto = $this->participante('2');
 
         $this->assertCount(2, $ana->codigos);
-        $this->assertSame(2, strlen($ana->codigos->first()->fragmento));
+        $this->assertSame(CodigoMision::largo(), strlen($ana->codigos->first()->fragmento));
         $this->assertNotSame(
             $ana->asegurarCodigos()->get($uno->id),
             $beto->asegurarCodigos()->get($uno->id),

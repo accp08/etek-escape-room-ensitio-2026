@@ -63,7 +63,7 @@
         <div class="mt-4 grid gap-2" style="grid-template-columns: repeat({{ max(1, $totalJugables) }}, minmax(0,1fr))">
             @foreach ($jugables as $fila)
                 <div class="code-slot text-lg" data-filled="{{ $fila['estado'] === 'superada' ? 'true' : 'false' }}">
-                    {{ $fila['estado'] === 'superada' ? $fila['fragmento'] : '··' }}
+                    {{ $fila['estado'] === 'superada' ? $fila['fragmento'] : str_repeat('·', \App\Models\CodigoMision::largo()) }}
                 </div>
             @endforeach
         </div>
