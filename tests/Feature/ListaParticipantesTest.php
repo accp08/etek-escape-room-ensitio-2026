@@ -36,6 +36,8 @@ class ListaParticipantesTest extends TestCase
 
         $pagina = $this->get(route('dashboard.participantes'))->assertOk()
             ->assertSee('Persona 25')->assertDontSee('Persona 26')
+            ->assertSee('class="paginador"', false)->assertSee('Siguiente ›')
+            ->assertSee('aria-label="Ir a la página 2"', false)
             ->viewData('participantes');
         $this->assertSame([1, 25, 30], [$pagina->firstItem(), $pagina->lastItem(), $pagina->total()]);
 

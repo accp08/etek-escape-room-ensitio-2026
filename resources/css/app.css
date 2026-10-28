@@ -344,6 +344,52 @@
 
     .btn-ghost:hover { border-color: rgba(0, 229, 255, 0.5); }
 
+    /* Paginador de las listas del dashboard (participantes, bitácora). */
+    .paginador {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px 16px;
+    }
+
+    .paginador-info { font-size: 11.5px; color: var(--color-muted); }
+
+    .paginador-paginas {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .paginador-item {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(46, 91, 140, 0.55);
+        background: rgba(14, 25, 48, 0.8);
+        color: var(--color-ink-soft);
+        font-size: 12px;
+        font-weight: 700;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    a.paginador-item:hover { border-color: rgba(0, 229, 255, 0.5); color: var(--color-cyan); }
+
+    .paginador-item[aria-current='page'] {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--color-cyan), var(--color-violet));
+        color: #fff;
+    }
+
+    .paginador-item[aria-disabled='true'] { opacity: 0.4; }
+
+    .paginador-puntos { padding: 0 4px; color: var(--color-muted); font-size: 12px; }
+
     .btn:disabled,
     .btn[aria-disabled='true'] {
         opacity: 0.45;
