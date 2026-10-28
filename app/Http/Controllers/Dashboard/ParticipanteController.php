@@ -17,10 +17,67 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ParticipanteController extends Controller
 {
-    public function index()
+    /** Filtros que acepta la lista, con sus opciones. */
+    public const FILTROS = [
+        'estado' => ['activos' => 'Activos', 'inactivos' => 'Inactivos'],
+        'ranking' => ['dentro' => 'En el ranking', 'fuera' => 'Fuera del ranking'],
+        'partida' => ['sin_partida' => 'Sin partida', 'en_curso' => 'En curso', 'completada' => 'Completada'],
+    ];
+
+    /**
+     * Lista paginada: con 2.000 participantes, cargarlos todos con sus partidas
+     * y fragmentos hacía la página pesadísima. Cada página trae solo su tramo
+     * y la última partida de cada uno.
+     */
+    public function index(Request $peticion)
     {
+        $busqueda = trim((string) $peticion->query('q'));
+        $area = trim((string) $peticion->query('area'));
+        $filtros = collect(self::FILTROS)
+            ->map(fn ($opciones, $clave) => array_key_exists($valor = (string) $peticion->query($clave), $opciones) ? $valor : '');
+
+        $consulta = Participante::with(['ultimaPartida', 'codigos'])->orderBy('nombre')->orderBy('id');
+
+        if ($busqueda !== '') {
+            $consulta->where(function ($c) use ($busqueda) {
+                $c->where('nombre', 'like', "%{$busqueda}%")
+                    ->orWhere('correo', 'like', "%{$busqueda}%")
+                    ->orWhere('area', 'like', "%{$busqueda}%");
+            });
+        }
+
+        if ($area !== '') {
+            $consulta->where('area', $area);
+        }
+
+        match ($filtros['estado']) {
+            'activos' => $consulta->where('activo', true),
+            'inactivos' => $consulta->where('activo', false),
+            default => null,
+        };
+
+        match ($filtros['ranking']) {
+            'dentro' => $consulta->where('en_ranking', true),
+            'fuera' => $consulta->where('en_ranking', false),
+            default => null,
+        };
+
+        match ($filtros['partida']) {
+            'sin_partida' => $consulta->whereDoesntHave('partidas'),
+            'completada' => $consulta->whereHas('partidas', fn ($p) => $p->where('estado', 'completada')),
+            'en_curso' => $consulta->whereHas('partidas')
+                ->whereDoesntHave('partidas', fn ($p) => $p->where('estado', 'completada')),
+            default => null,
+        };
+
         return view('dashboard.participantes', [
-            'participantes' => Participante::with(['partidas', 'codigos'])->orderBy('nombre')->get(),
+            'participantes' => $consulta->paginate(25)->withQueryString(),
+            'total' => Participante::count(),
+            'areas' => Participante::whereNotNull('area')->distinct()->orderBy('area')->pluck('area'),
+            'busqueda' => $busqueda,
+            'area' => $area,
+            'filtros' => $filtros,
+            'filtrando' => $busqueda !== '' || $area !== '' || $filtros->filter()->isNotEmpty(),
             'misiones' => Mision::jugables()->get(),
         ]);
     }

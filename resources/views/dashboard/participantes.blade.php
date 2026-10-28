@@ -11,12 +11,12 @@
                 <p class="eyebrow">Quiénes juegan</p>
                 <h2 class="mt-1 text-[18px] font-black text-ink">Participantes</h2>
             </div>
-            <span class="badge">{{ $participantes->count() }} registrados</span>
+            <span class="badge">{{ number_format($total, 0, ',', '.') }} registrados</span>
         </div>
 
         <p class="mt-2 text-[12.5px] leading-relaxed text-muted">
             Cada persona entra al juego solo con su <strong class="text-ink-soft">correo</strong>.
-            @if ($participantes->isNotEmpty())
+            @if ($total > 0)
                 <a href="{{ route('dashboard.participantes.csv') }}" class="font-semibold text-cyan hover:underline">Descargar todos (CSV)</a>
             @endif
         </p>
@@ -43,15 +43,67 @@
             </div>
         @endif
 
-        @if ($participantes->isEmpty())
+        @if ($total > 0)
+            {{-- Buscador y filtros: la lista es larga (hasta miles de personas). --}}
+            <form method="GET" class="panel-flat mt-5 flex flex-wrap items-end gap-3 p-4">
+                <div class="min-w-[200px] flex-[2]">
+                    <label class="field-label">Buscar</label>
+                    <input name="q" type="search" class="field" value="{{ $busqueda }}" placeholder="Nombre, correo o área" maxlength="80">
+                </div>
+
+                @if ($areas->isNotEmpty())
+                    <div class="min-w-[140px] flex-1">
+                        <label class="field-label">Área</label>
+                        <select name="area" class="field">
+                            <option value="">Todas</option>
+                            @foreach ($areas as $a)
+                                <option value="{{ $a }}" @selected($area === $a)>{{ $a }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                @foreach ([
+                    'estado' => ['Acceso', 'Todos'],
+                    'ranking' => ['Ranking', 'Todos'],
+                    'partida' => ['Partida', 'Todas'],
+                ] as $clave => [$etiqueta, $todos])
+                    <div class="min-w-[130px] flex-1">
+                        <label class="field-label">{{ $etiqueta }}</label>
+                        <select name="{{ $clave }}" class="field">
+                            <option value="">{{ $todos }}</option>
+                            @foreach (\App\Http\Controllers\Dashboard\ParticipanteController::FILTROS[$clave] as $v => $et)
+                                <option value="{{ $v }}" @selected($filtros[$clave] === $v)>{{ $et }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endforeach
+
+                <div class="flex items-center gap-3">
+                    <button type="submit" class="btn btn-primary !w-auto !px-4 !py-2.5 !text-[12px]">Filtrar</button>
+                    @if ($filtrando)
+                        <a href="{{ route('dashboard.participantes') }}" class="text-[11.5px] font-semibold text-muted hover:text-cyan">Limpiar</a>
+                    @endif
+                </div>
+            </form>
+
+            <p class="mt-3 text-[11.5px] text-muted">
+                @if ($participantes->total() === 0)
+                    Ningún participante coincide con la búsqueda.
+                @else
+                    Mostrando {{ $participantes->firstItem() }}–{{ $participantes->lastItem() }}
+                    de {{ number_format($participantes->total(), 0, ',', '.') }}{{ $filtrando ? ' encontrados' : '' }}.
+                @endif
+            </p>
+        @else
             <div class="panel-flat mt-5 p-6 text-center">
-                <p class="text-[13px] text-muted">Todavía no hay participantes. Crea el primero a la derecha.</p>
+                <p class="text-[13px] text-muted">Todavía no hay participantes. Crea el primero a la derecha o carga el Excel.</p>
             </div>
         @endif
 
         <div class="mt-5 space-y-3">
             @foreach ($participantes as $p)
-                @php $partida = $p->partidas->sortByDesc('id')->first(); @endphp
+                @php $partida = $p->ultimaPartida; @endphp
 
                 <div class="panel-flat p-4">
                     <form method="POST" action="{{ route('dashboard.participantes.actualizar', $p) }}" id="part-{{ $p->id }}">
@@ -135,6 +187,10 @@
                 </div>
             @endforeach
         </div>
+
+        @if ($participantes->hasPages())
+            <div class="mt-4">{{ $participantes->links() }}</div>
+        @endif
     </section>
 
     <aside class="panel h-fit p-5">

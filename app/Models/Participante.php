@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
 #[Fillable(['nombre', 'documento', 'area', 'correo', 'codigo_acceso', 'activo', 'en_ranking'])]
@@ -36,6 +37,12 @@ class Participante extends Model
     public function partidas(): HasMany
     {
         return $this->hasMany(Partida::class);
+    }
+
+    /** La partida más reciente, para cargarla junto con la lista sin traer las demás. */
+    public function ultimaPartida(): HasOne
+    {
+        return $this->hasOne(Partida::class)->latestOfMany();
     }
 
     public function codigos(): HasMany
