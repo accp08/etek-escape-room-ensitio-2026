@@ -105,6 +105,50 @@
     <button type="submit" class="btn btn-primary mt-6 md:col-span-2">Guardar parámetros</button>
 </form>
 
+{{-- Acceso de todos los participantes: formulario aparte, actúa de inmediato. Solo con acceso
+     por correo (con Outlook, el ingreso reactiva al participante). --}}
+@if (ajuste('metodo_acceso', 'correo') === 'correo')
+    @php
+        ['total' => $total, 'activos' => $activos] = $participantes;
+        $fmt = fn ($n) => number_format($n, 0, ',', '.');
+    @endphp
+    <section id="acceso-participantes" class="panel mt-4 p-5">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="eyebrow">Acceso por correo</p>
+                <h2 class="mt-1 text-[18px] font-black text-ink">Inicio de sesión de los participantes</h2>
+            </div>
+            <span @class(['badge', 'badge-ok' => $total > 0 && $activos === $total, 'badge-muted' => $activos === 0])>
+                {{ $fmt($activos) }} de {{ $fmt($total) }} pueden entrar
+            </span>
+        </div>
+        <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
+            Cambia la casilla <strong class="text-ink-soft">Activo</strong> de todos los participantes a la vez.
+            Al desactivar, nadie puede iniciar sesión y quienes estén jugando quedan fuera; su avance no se borra.
+            Para habilitar solo a algunos, usa la casilla de cada uno en Participantes.
+        </p>
+
+        <div class="mt-4 flex flex-wrap gap-3">
+            <form method="POST" action="{{ route('dashboard.ajustes.acceso-participantes') }}"
+                  onsubmit="return confirm('¿Permitir que los {{ $fmt($total) }} participantes inicien sesión?')">
+                @csrf
+                <input type="hidden" name="accion" value="activar">
+                <button type="submit" class="btn btn-primary !w-auto" @disabled($total === 0 || $activos === $total)>
+                    Activar inicio de sesión de todos
+                </button>
+            </form>
+            <form method="POST" action="{{ route('dashboard.ajustes.acceso-participantes') }}"
+                  onsubmit="return confirm('Nadie podrá iniciar sesión y quienes estén jugando quedarán fuera. ¿Desactivar a los {{ $fmt($activos) }} participantes activos?')">
+                @csrf
+                <input type="hidden" name="accion" value="desactivar">
+                <button type="submit" class="btn btn-danger !w-auto" @disabled($activos === 0)>
+                    Desactivar inicio de sesión de todos
+                </button>
+            </form>
+        </div>
+    </section>
+@endif
+
 {{-- Audio de las pantallas: formularios aparte porque suben un archivo. --}}
 <div class="mt-4 grid gap-4 md:grid-cols-2">
     @foreach ([
@@ -144,6 +188,8 @@
     document.getElementById('metodo_acceso')?.addEventListener('change', (evento) => {
         const configuracion = document.getElementById('configuracion-dominios-outlook');
         configuracion?.classList.toggle('hidden', evento.target.value !== 'outlook');
+        // El botón masivo depende del método guardado: se oculta mientras se elige otro.
+        document.getElementById('acceso-participantes')?.classList.toggle('hidden', evento.target.value !== 'correo');
     });
 </script>
 @endsection

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ajuste;
+use App\Models\Participante;
 use App\Models\PasoBriefing;
 use App\Models\Texto;
 use App\Support\Audio;
@@ -165,6 +166,10 @@ class ContenidoController extends Controller
         return view('dashboard.ajustes', [
             'ajustes' => Ajuste::orderBy('clave')->get()->keyBy('clave'),
             'estadoAtaque' => Texto::where('clave', self::TEXTO_ESTADO_ATAQUE)->value('valor') ?? 'Ataque en curso',
+            'participantes' => [
+                'total' => Participante::count(),
+                'activos' => Participante::where('activo', true)->count(),
+            ],
         ]);
     }
 

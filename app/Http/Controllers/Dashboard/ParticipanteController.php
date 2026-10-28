@@ -146,6 +146,30 @@ class ParticipanteController extends Controller
         return back()->with('exito', "Se reinició la partida de {$participante->nombre}.");
     }
 
+    /**
+     * Activa o desactiva de una vez el acceso de todos los participantes. Solo
+     * con acceso por correo: con Outlook, el ingreso reactiva al participante.
+     * Los que tengan sesión abierta quedan fuera en su siguiente petición.
+     */
+    public function accesoMasivo(Request $peticion): RedirectResponse
+    {
+        $activar = $peticion->validate(['accion' => ['required', 'in:activar,desactivar']])['accion'] === 'activar';
+
+        if (ajuste('metodo_acceso', 'correo') !== 'correo') {
+            return back()->withErrors(['accion' => 'Solo se puede con el inicio de sesión por correo.']);
+        }
+
+        $cambiados = Participante::where('activo', ! $activar)->update(['activo' => $activar]);
+
+        $mensaje = $activar
+            ? "Inicio de sesión activado: {$cambiados} participantes pueden volver a entrar."
+            : "Inicio de sesión desactivado: {$cambiados} participantes ya no pueden entrar.";
+
+        Bitacora::dashboard('participantes.acceso', $mensaje, ['activo' => $activar, 'cambiados' => $cambiados], $activar ? 'info' : 'aviso');
+
+        return back()->with('exito', $mensaje);
+    }
+
     /* ---------------- Carga masiva ---------------- */
 
     public function importar(Request $peticion, ImportadorParticipantes $importador): RedirectResponse

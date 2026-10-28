@@ -174,6 +174,7 @@ Route::prefix('dashboard')->group(function () {
         Route::put('/ajustes', [ContenidoController::class, 'guardarAjustes'])->name('dashboard.ajustes.guardar');
         Route::post('/ajustes/audio/{pantalla}', [ContenidoController::class, 'guardarAudio'])->name('dashboard.ajustes.audio');
         Route::delete('/ajustes/audio/{pantalla}', [ContenidoController::class, 'quitarAudio'])->name('dashboard.ajustes.audio.quitar');
+        Route::post('/ajustes/acceso-participantes', [ParticipanteController::class, 'accesoMasivo'])->name('dashboard.ajustes.acceso-participantes');
 
         // Participantes
         Route::get('/participantes', [ParticipanteController::class, 'index'])->name('dashboard.participantes');
