@@ -106,6 +106,10 @@ class Xlsx
         $archivos['xl/_rels/workbook.xml.rels'] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'.$relaciones.'</Relationships>';
 
+        if (! class_exists(ZipArchive::class)) {
+            return self::comprimirSinExtensionZip($archivos);
+        }
+
         $temporal = tempnam(sys_get_temp_dir(), 'xlsx');
         $zip = new ZipArchive;
         $zip->open($temporal, ZipArchive::CREATE | ZipArchive::OVERWRITE);
@@ -119,6 +123,43 @@ class Xlsx
         @unlink($temporal);
 
         return $binario;
+    }
+
+    /**
+     * Genera el contenedor ZIP requerido por XLSX cuando PHP no tiene ZipArchive.
+     *
+     * @param  array<string, string>  $archivos
+     */
+    private static function comprimirSinExtensionZip(array $archivos): string
+    {
+        $contenido = '';
+        $directorio = '';
+        $fecha = getdate();
+        $horaDos = ($fecha['hours'] << 11) | ($fecha['minutes'] << 5) | intdiv($fecha['seconds'], 2);
+        $fechaDos = (($fecha['year'] - 1980) << 9) | ($fecha['mon'] << 5) | $fecha['mday'];
+
+        foreach ($archivos as $nombre => $archivo) {
+            $nombre = str_replace('\\', '/', $nombre);
+            $comprimido = gzdeflate($archivo);
+            $crc = crc32($archivo);
+            $longitudNombre = strlen($nombre);
+            $desplazamiento = strlen($contenido);
+
+            $contenido .= pack('VvvvvvVVVvv', 0x04034B50, 20, 0, 8, $horaDos, $fechaDos,
+                $crc, strlen($comprimido), strlen($archivo), $longitudNombre, 0)
+                .$nombre.$comprimido;
+
+            $directorio .= pack('VvvvvvvVVVvvvvvVV', 0x02014B50, 20, 20, 0, 8, $horaDos, $fechaDos,
+                $crc, strlen($comprimido), strlen($archivo), $longitudNombre, 0, 0, 0, 0, 0, $desplazamiento)
+                .$nombre;
+        }
+
+        $longitudDirectorio = strlen($directorio);
+        $desplazamientoDirectorio = strlen($contenido);
+        $cantidadArchivos = count($archivos);
+
+        return $contenido.$directorio.pack('VvvvvVVv', 0x06054B50, 0, 0, $cantidadArchivos,
+            $cantidadArchivos, $longitudDirectorio, $desplazamientoDirectorio, 0);
     }
 
     /* ---------------- Lectura ---------------- */

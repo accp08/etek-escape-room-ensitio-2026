@@ -37,6 +37,7 @@
             ],
             'Reportes' => [
                 ['dashboard.resultados',    'Resultados',     'search',  \App\Models\Partida::count()],
+                ['dashboard.reporte-areas', 'Reporte por áreas', 'search', null],
                 ['dashboard.registros',     'Bitácora',       'clock',   \App\Models\Registro::count()],
             ],
             'Configuración' => [

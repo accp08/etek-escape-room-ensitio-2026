@@ -146,6 +146,8 @@ Route::prefix('dashboard')->group(function () {
         Route::get('/', [PanelController::class, 'index'])->name('dashboard');
         Route::get('/registros', [PanelController::class, 'registros'])->name('dashboard.registros');
         Route::get('/en-linea', [PanelController::class, 'enLinea'])->name('dashboard.en-linea');
+        Route::get('/reporte-areas', [PanelController::class, 'reporteAreas'])->name('dashboard.reporte-areas');
+        Route::get('/reporte-areas/excel', [PanelController::class, 'exportarReporteAreas'])->name('dashboard.reporte-areas.excel');
 
         // Empresa (marca)
         Route::get('/empresa', [EmpresaController::class, 'editar'])->name('dashboard.empresa');
