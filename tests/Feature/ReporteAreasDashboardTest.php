@@ -76,14 +76,19 @@ class ReporteAreasDashboardTest extends TestCase
             ->assertHeader('content-disposition', 'attachment; filename="reporte-areas-'.now()->format('Y-m-d-Hi').'.xlsx"')
             ->getContent();
 
-        $hoja = $this->leerHojaXlsx($contenido, 'xl/worksheets/sheet1.xml');
+        $resumen = $this->leerHojaXlsx($contenido, 'xl/worksheets/sheet1.xml');
+        $detalle = $this->leerHojaXlsx($contenido, 'xl/worksheets/sheet2.xml');
 
-        $this->assertStringContainsString('Participante', $hoja);
-        $this->assertStringContainsString('Ana', $hoja);
-        $this->assertStringContainsString('Ingeniería social', $hoja);
-        $this->assertStringContainsString('Detectar phishing', $hoja);
-        $this->assertStringContainsString('01:35', $hoja);
-        $this->assertSame(2, substr_count($hoja, '<row r='));
+        $this->assertStringContainsString('Finanzas', $resumen);
+        $this->assertStringContainsString('Precisión', $resumen);
+        $this->assertStringContainsString('Participante', $detalle);
+        $this->assertStringContainsString('Ana', $detalle);
+        $this->assertStringContainsString('ana@empresa.com', $detalle);
+        $this->assertStringContainsString('Ingeniería social', $detalle);
+        $this->assertStringContainsString('Detectar phishing', $detalle);
+        $this->assertStringContainsString('Superada', $detalle);
+        $this->assertStringContainsString('01:35', $detalle);
+        $this->assertSame(2, substr_count($detalle, '<row r='));
     }
 
     private function leerHojaXlsx(string $contenido, string $archivoBuscado): string
@@ -137,6 +142,8 @@ class ReporteAreasDashboardTest extends TestCase
             'segundos' => $segundos,
             'aciertos' => $aciertos,
             'aciertos_posibles' => 1,
+            'iniciada_en' => now()->subMinutes(5),
+            'finalizada_en' => now(),
         ]);
     }
 }

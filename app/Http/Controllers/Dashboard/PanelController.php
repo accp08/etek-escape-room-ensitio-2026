@@ -76,32 +76,62 @@ class PanelController extends Controller
             (string) $peticion->query('tematica', ''),
             (string) $peticion->query('area', ''),
         );
-        $filas = $reporte->map(fn (array $fila) => [
+        $resumen = $reporte->groupBy(fn (array $fila) => $fila['area'].'|'.$fila['tematica'])
+            ->map(function ($filas) {
+                $posibles = $filas->sum('posibles');
+
+                return [
+                    $filas->first()['area'],
+                    $filas->first()['tematica'],
+                    (string) $filas->pluck('correo')->unique()->count(),
+                    (string) $filas->sum('intentos'),
+                    sprintf('%02d:%02d', intdiv($filas->sum('segundos'), 60), $filas->sum('segundos') % 60),
+                    $filas->sum('aciertos').'/'.$posibles,
+                    $posibles > 0 ? round($filas->sum('aciertos') * 100 / $posibles).'%' : '0%',
+                ];
+            })
+            ->prepend(['Área', 'Temática', 'Participantes', 'Intentos', 'Tiempo total', 'Aciertos', 'Precisión'])
+            ->all();
+
+        $detalle = $reporte->map(fn (array $fila) => [
             $fila['area'],
             $fila['participante'],
+            $fila['correo'],
             $fila['tematica'],
             $fila['mision'],
+            $fila['estado'],
             (string) $fila['intentos'],
             sprintf('%02d:%02d', intdiv($fila['segundos'], 60), $fila['segundos'] % 60),
             $fila['aciertos'].'/'.$fila['posibles'],
+            $fila['iniciada_en'],
+            $fila['finalizada_en'],
         ])->prepend([
-            'Área', 'Participante', 'Temática', 'Misión', 'Intentos', 'Tiempo', 'Aciertos',
+            'Área', 'Participante', 'Correo', 'Temática', 'Misión', 'Estado', 'Intentos',
+            'Tiempo total', 'Aciertos', 'Inicio', 'Finalización',
         ])->all();
 
         $nombre = 'reporte-areas-'.now()->format('Y-m-d-Hi').'.xlsx';
 
-        return response(Xlsx::escribir([[
-            'nombre' => 'Reporte por áreas',
-            'encabezado' => true,
-            'anchos' => [24, 32, 30, 36, 12, 12, 12],
-            'filas' => $filas,
-        ]]), 200, [
+        return response(Xlsx::escribir([
+            [
+                'nombre' => 'Resumen',
+                'encabezado' => true,
+                'anchos' => [24, 30, 16, 12, 14, 12, 12],
+                'filas' => $resumen,
+            ],
+            [
+                'nombre' => 'Detalle por misión',
+                'encabezado' => true,
+                'anchos' => [24, 32, 36, 30, 36, 16, 12, 14, 12, 20, 20],
+                'filas' => $detalle,
+            ],
+        ]), 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="'.$nombre.'"',
         ]);
     }
 
-    /** @return Collection<int, array{participante: string, area: string, tematica: string, mision: string, intentos: int, segundos: int, aciertos: int, posibles: int}> */
+    /** @return Collection<int, array{participante: string, correo: string, area: string, tematica: string, mision: string, estado: string, intentos: int, segundos: int, aciertos: int, posibles: int, iniciada_en: string, finalizada_en: string}> */
     private function filasReporteAreas(string $tematica, string $area): Collection
     {
         return PartidaMision::query()
@@ -124,18 +154,29 @@ class PanelController extends Controller
                 $avance->mision_id,
             ]))
             ->map(function ($intentos) {
-                $avance = $intentos->first();
+                $avance = $intentos->sortByDesc('id')->first();
                 $participante = $avance->partida->participante;
+                $iniciadaEn = $intentos->pluck('iniciada_en')->filter()->min();
+                $finalizadaEn = $intentos->pluck('finalizada_en')->filter()->max();
 
                 return [
                     'participante' => $participante->nombre,
+                    'correo' => $participante->correo ?? '',
                     'area' => $participante->area ?: 'Sin área',
                     'tematica' => $avance->mision->etiqueta ?: 'Sin temática',
                     'mision' => $avance->mision->titulo,
+                    'estado' => match ($avance->estado) {
+                        'superada' => 'Superada',
+                        'fallada' => 'Fallida',
+                        'en_curso' => 'En curso',
+                        default => 'Pendiente',
+                    },
                     'intentos' => (int) $intentos->sum('intentos_usados'),
                     'segundos' => (int) $intentos->sum('segundos'),
                     'aciertos' => (int) $intentos->sum('aciertos'),
                     'posibles' => (int) $intentos->sum('aciertos_posibles'),
+                    'iniciada_en' => $iniciadaEn?->format('d/m/Y H:i') ?? '',
+                    'finalizada_en' => $finalizadaEn?->format('d/m/Y H:i') ?? '',
                 ];
             })
             ->sortBy(['area', 'participante', 'mision'])
